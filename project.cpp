@@ -93,23 +93,26 @@ class Vector {
 
   T& operator[](int i) { return data[i]; }
 
+  const T& operator[](int i) const { return data[i]; }
+
   // const T& operator[] (int i) const {
   // return T(this->data[i]);
   // }
 
   /** operator +**/
-  template <typename T2>
-  auto operator+(Vector<T2> other) {
-    Vector<typename std::common_type<T, T2>::type> v(this->n);
-    for (int i = 0; i < this->n; ++i) {
-      v[i] = data[i] + other[i];
+  template <typename T2, typename T1>
+  friend Vector<typename std::common_type<T1, T2>::type>& operator+(const Vector<T1> & v1,
+  const Vector<T2> & v2) {
+    Vector<typename std::common_type<T, T2>::type> v(v1.n);
+    for (int i = 0; i < v1.n; i++) {
+      v[i] = v1[i] + v2[i];
     }
     return v;
   }
 
   /** operator -**/
   template <typename T2>
-  auto operator-(Vector<T2> other) {
+  auto operator-(const Vector<T2> & other) {
     Vector<typename std::common_type<T, T2>::type> v(this->n);
     for (int i = 0; i < this->n; ++i) {
       v[i] = data[i] - other[i];
@@ -118,26 +121,40 @@ class Vector {
   }
 
   template <typename V>
-  Vector<typename std::common_type<V, T>::type>& operator*(const V& scalar) {
-    Vector<typename std::common_type<V, T>::type> new_vec(this->n);
+  Vector<typename std::common_type<V, T>::type>& operator* (const V& scalar) const {
+    Vector<typename std::common_type<V, T>::type> nv(this->n);
     for (int i = 0; i < this->n; i++) {
-      new_vec[i] = scalar * data[i];
+      nv.data[i] = scalar * data[i];
     }
-    return new_vec;
+    return nv;
+  }
+
+  template <typename V>
+  Vector<typename std::common_type<V, T>::type>& operator* (const V & scalar) {
+    Vector<typename std::common_type<V, T>::type> nv(this->n);
+    for (int i = 0; i < this->n; i++) {
+      nv.data[i] = scalar * data[i];
+    }
+    return nv;
   }
 
   template <typename V, typename U>
-  friend Vector<typename std::common_type<V, U>::type> operator*(
-      const V& scalar, const Vector<U> vec) {
-    Vector<typename std::common_type<V, U>::type> new_vec(vec.n);
-    for (int i = 0; i < vec.n; i++) {
-      new_vec[i] = scalar * vec[i];
-    }
-    return new_vec;
-  }
+  friend Vector<typename std::common_type<V, U>::type>& operator*(
+      const V& scalar, const Vector<U>& vec);
 
   int len(void) { return this->n; }
 };
+
+template <typename V, typename U>
+Vector<typename std::common_type<V, U>::type>& operator*(const V& scalar,
+                                                        const Vector<U>& vec) {
+  // Vector<typename std::common_type<V, U>::type> nv(vec.n);
+  // for (int i = 0; i < vec.n; i++) {
+  //   nv[i] = scalar * vec.data[i];
+  // }
+  // return nv;
+  return vec * scalar;
+}
 // TODO: throw exception if length differs
 
 template <typename T, typename U>
@@ -161,22 +178,43 @@ T norm(const Vector<T>& vec) {
 
 template <typename T>
 class Matrix {
-  private:
-    int r, c;
-    std::map<std::pair<int, int>, T> data;
-  
-  public:
-    Matrix(int rows, int cols) : r(rows), c(cols);
-    ~Matrix(){
-      rows = 0;
-      cols = 0;
-      data.clear();
+ private:
+  int r, c;
+  std::map<std::pair<int, int>, T> data;
+
+ public:
+  Matrix(int rows, int cols) : r(rows), c(cols){};
+  ~Matrix() {
+    r = 0;
+    c = 0;
+    data.clear();
+  }
+
+  T& operator[](const std::pair<int, int>& ij) {
+    auto it = data.find(ij);
+    if (it != data.end()) {
+      return data.at(ij);
+    } else {
+      data.insert(ij, 0);
+      return data.at(ij);
     }
+  }
 
-    T& operator[] const (const std::pair<int, int> & ij) {
-
+  T& operator()(const std::pair<int, int>& ij) const {
+    auto it = data.find(ij);
+    if (it != data.end()) {
+      return data.at(ij);
+    } else {
+      // return std::static_cast<T>(0);
+      return 0;
     }
+  }
 
+  // template <typename V, typename U>
+  // Vector<typename std::common_type<V, U>::type> operator*(
+  //     const Matrix<T>& lhs, const Vector<U>& rhs) {
+  //   std::cout << std::endl;
+  // }
 };
 
 template <typename T>
@@ -201,6 +239,7 @@ int main(int argc, char* argv[]) {
   // test vector
   Vector<double> x({1.0, 1.1, 1.2}), y({2, 3, 4}), z({1.0f, 2.0f, 3.0f}), w;
   w = y * 3;
-  // w = 2 * x + y  * 3;
+  w = 2 * x;
+  w = 2 * x + y * 3;
   return 0;
 }

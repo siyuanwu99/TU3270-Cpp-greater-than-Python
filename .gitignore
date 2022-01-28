@@ -1,1 +1,6 @@
 project
+project.cpp.exe
+.gitignore
+.vscode/launch.json
+.gitignore
+.vscode/tasks.json

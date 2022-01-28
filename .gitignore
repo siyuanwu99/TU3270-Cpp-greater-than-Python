@@ -2,5 +2,6 @@ project
 project.cpp.exe
 .gitignore
 .vscode/launch.json
-.gitignore
 .vscode/tasks.json
+.vscode/c_cpp_properties.json
+.vscode/settings.json

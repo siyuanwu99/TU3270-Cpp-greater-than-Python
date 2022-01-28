@@ -21,45 +21,27 @@ class Vector {
 
  public:
   /** constructor and destructor **/
-  /**
-   * @brief default constructor, set length to 0
-   */
   explicit Vector() : n(0), data(nullptr) {}
-
-  /**
-   * @brief constructor with given length
-   */
   explicit Vector(int a) : n(a), data(new T[a]) {}
-
-  /**
-   * @brief constructor with initializer list
-   */
   explicit Vector(const std::initializer_list<T>& list)
       : Vector((int)list.size()) {
     std::uninitialized_copy(list.begin(), list.end(), data);
   }
-
-  /**
-   * @brief copy constructor
-   */
-  explicit Vector(const Vector& other) : n(other.n) {
+  
+  /** copy constructor **/
+  Vector(const Vector<T>& other) : n(other.n), data(new T[other.n]) {
     for (auto i = 0; i < other.n; i++) {
       data[i] = other.data[i];
     }
+    std::cout<<"copy constructor\n";
   }
-
-  /**
-   * @brief move constructor
-   */
-  explicit Vector(const Vector&& other) : n(other.n), data(other.data) {
+ 
+ /** move constructor **/
+  Vector(Vector<T>&& other) : n(other.n), data(other.data) {
     other.n = 0;
     delete[] other.data;
     other.data = nullptr;
   }
-
-  /**
-   * @brief destructor
-   */
   ~Vector() {
     n = 0;
     delete[] data;
@@ -67,7 +49,7 @@ class Vector {
   }
 
   /** copy assignment **/
-  const Vector<T>& operator=(const Vector<T>& other) {
+  Vector<T>& operator=(const Vector<T>& other) {
     if (this != &other) {
       delete[] data;
       n = other.n;
@@ -80,7 +62,7 @@ class Vector {
   }
 
   /**change the value of all the entry as a constant**/
-  const Vector<T>& operator=(const int constant) {
+  Vector<T>& operator=(int constant) {
       for (int i = 0; i < this->n; ++i) {
         T value = constant;
         data[i] = value;
@@ -89,7 +71,7 @@ class Vector {
   }
 
   /** move assignment **/
-  const Vector<T>& operator=(Vector<T>&& other) {
+  Vector<T>& operator=(Vector<T>&& other) {
     if (this != &other) {
       std::swap(this->data, other.data);
       std::swap(this->n, other.n);
@@ -257,7 +239,6 @@ const Matrix<V>& lhs, const Vector<U>& rhs){
         throw "Incomatible dimensions of the vector and the matrix!";
     }
     Vector<typename std::common_type<V, U>::type> new_vec(lhs.row());
-    new_vec = 0;
     for(auto it = lhs.cbegin(); it != lhs.cend(); ++it){
         int i = it->first.first;
         int j = it->first.second;
@@ -298,8 +279,9 @@ int main(int argc, char* argv[]) {
     std::cout << M[{0, 0}] << std::endl;
     std::cout << M({1, 9}) << std::endl;
     std::cout << typeid(M.row()).name() << ' ' << M.col() << std::endl;
-    Vector<double>v2(M1*x);
-    //std::cout << M*x << std::endl;
+    Vector<double> v2 = x;
+    v2 = M1*x;
+    std::cout << 1 << std::endl;
     std::cout << x[2] << std::endl;
     std::cout << M({1, 1}) << std::endl;
   }

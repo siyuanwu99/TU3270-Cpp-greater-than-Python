@@ -86,10 +86,6 @@ class Vector {
 
   const T& operator[](int i) const { return data[i]; }
 
-  // const T& operator[] (int i) const {
-  // return T(this->data[i]);
-  // }
-
   /** operator +**/
   template <typename T2, typename T1>
   friend Vector<typename std::common_type<T1, T2>::type>& operator+(const Vector<T1> & v1,
@@ -139,11 +135,6 @@ class Vector {
 template <typename V, typename U>
 Vector<typename std::common_type<V, U>::type>& operator*(const V& scalar,
                                                         const Vector<U>& vec) {
-  // Vector<typename std::common_type<V, U>::type> nv(vec.n);
-  // for (int i = 0; i < vec.n; i++) {
-  //   nv[i] = scalar * vec.data[i];
-  // }
-  // return nv;
   return vec * scalar;
 }
 // TODO: throw exception if length differs
@@ -263,7 +254,22 @@ void heun(const Vector<std::function<T(Vector<T> const&, T)> >& f, Vector<T>& y,
 
 template <typename T>
 class SimplestWalker {
-  // Your implementation of the simplest walker class starts here
+private:
+  Vector<T> y_init;
+  T t_init;
+  T slope;
+public:
+  //** Constructor **//
+  SimplestWalker(const Vector<T>& y0, T t0, T gamma) : y_init(y0), t_init(t0), slope(gamma){}
+  //** Derivative **//
+  Vector<T> derivative(const Vector<T>& y) const{
+    Vector<T> dot(4);
+    dot[0] = y[2];
+    dot[1] = y[3];
+    dot[3] = sin(dot[1] - slope);
+    dot[2] = dot[3] + y[3]*y[3]*sin(y[0])-cos(y[1]-slope)*sin(y[0]);
+    return dot;
+  }
 };
 
 

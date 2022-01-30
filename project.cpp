@@ -261,8 +261,8 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
     Vector p_k(length), v_k(length), h(length), x_k(length), s(length), t(length), r_k(length);
 
     for(int k=0; k<maxiter; ++k){
-        rho_k = dot(q_0, r_k_1); // TODO: r_k_1 assign
-        beta = (rho_k / rho_k_1) * (alpha / omega_k_1); //TODO: rho_k_1 assign
+        rho_k = dot(q_0, r_k_1);
+        beta = (rho_k / rho_k_1) * (alpha / omega_k_1);
         p_k = r_k_1 + beta*(p_k_1 - omega_k_1 * v_k_1);
         v_k = A * p_k;
         alpha = rho_k / dot(q_0, v_k);

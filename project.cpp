@@ -247,12 +247,54 @@ const Matrix<V>& lhs, const Vector<U>& rhs){
     return new_vec;
 }
 
-
 template <typename T>
 int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
              T tol = (T)1e-8, int maxiter = 100) {
-  // Your implementation of the bicgstab function starts here
-  return 0;
+    // Your implementation of the bicgstab function starts here
+    int length = b.len();
+    auto q_0(b - A * x), r_k_1(b - A * x);
+    auto x_k_1 = x;
+    Vector v_k_1(length), p_k_1(length);
+    v_k_1(length), p_k_1(length) = 0;
+    double alpha, rho_k_1, omega_k_1 = 1;
+    double rho_k, beta, omega_k;
+    Vector p_k(length), v_k(length), h(length), x_k(length), s(length), t(length), r_k(length);
+
+    for(int k=0; k<maxiter; ++k){
+        rho_k = dot(q_0, r_k_1); // TODO: r_k_1 assign
+        beta = (rho_k / rho_k_1) * (alpha / omega_k_1); //TODO: rho_k_1 assign
+        p_k = r_k_1 + beta*(p_k_1 - omega_k_1 * v_k_1);
+        v_k = A * p_k;
+        alpha = rho_k / dot(q_0, v_k);
+        h = x_k_1 + alpha * p_k;
+
+        if(norm(b-A*h) < tol){
+            x_k = h;
+            x = x_k;
+            return k;
+        }
+
+        s = r_k_1 - alpha * v_k;
+        t = A * s;
+        omega_k = dot(t, s) / dot(t, t);
+        x_k = h + omega_k * s;
+        x = x_k;
+
+        if(norm(b-A*x_k) < tol){
+            return k;
+        }
+
+        r_k = s - omega_k * t;
+
+        // update the variables
+        r_k_1 = r_k;
+        rho_k_1 = rho_k;
+        omega_k_1 = omega_k;
+        p_k_1 = p_k;
+        v_k_1 = v_k;
+        x_k_1 = x_k;
+    }
+  return -1;
 }
 
 template <typename T>

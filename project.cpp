@@ -33,7 +33,7 @@ class Vector {
     for (auto i = 0; i < other.n; i++) {
       data[i] = other.data[i];
     }
-    std::cout<<"copy constructor\n";
+    //std::cout<<"copy constructor\n";
   }
  
  /** move constructor **/
@@ -42,6 +42,8 @@ class Vector {
     delete[] other.data;
     other.data = nullptr;
   }
+
+  /** destructor**/
   ~Vector() {
     n = 0;
     delete[] data;
@@ -82,24 +84,37 @@ class Vector {
     return *this;
   }
 
-  T& operator[](int i) { return data[i]; }
+  /**iterators**/
+  auto begin()const{return this->data.begin();}
+  auto end()const{return this->data.end();}
+  auto cbegin()const{return this->data.cbegin();}
+  auto cend()const{return this->data.cend();}
 
+  /**indexing operators**/
+  T& operator[](int i) { return data[i]; }
   const T& operator[](int i) const { return data[i]; }
 
-  /** operator +**/
-  template <typename T2, typename T1>
-  friend Vector<typename std::common_type<T1, T2>::type>& operator+(const Vector<T1> & v1,
-  const Vector<T2> & v2) {
-    Vector<typename std::common_type<T, T2>::type> v(v1.n);
-    for (int i = 0; i < v1.n; i++) {
-      v[i] = v1[i] + v2[i];
+  /** operator +*/
+  template <typename T2>
+  auto operator+(const Vector<T2> & other) const {
+    if(this->len() != other.len()){
+        throw "Incompatible dimensions of the vectors!";
+    }
+
+    Vector<typename std::common_type<T, T2>::type> v(this->n);
+    for (int i = 0; i < this->n; ++i) {
+      v[i] = data[i] + other[i];
     }
     return v;
   }
 
   /** operator -**/
   template <typename T2>
-  auto operator-(const Vector<T2> & other) {
+  auto operator-(const Vector<T2> & other) const {
+    if(this->len() != other.len()){
+        throw "Incompatible dimensions of the vectors!";
+    }
+
     Vector<typename std::common_type<T, T2>::type> v(this->n);
     for (int i = 0; i < this->n; ++i) {
       v[i] = data[i] - other[i];
@@ -251,7 +266,7 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
     double rho_k, beta, omega_k;
     Vector p_k(length), v_k(length), h(length), x_k(length), s(length), t(length), r_k(length);
 
-    for(int k=0; k<maxiter; ++k){
+    for(int k=1; k<=maxiter; ++k){
         rho_k = dot(q_0, r_k_1);
         beta = (rho_k / rho_k_1) * (alpha / omega_k_1);
         p_k = r_k_1 + beta*(p_k_1 - omega_k_1 * v_k_1);
@@ -322,7 +337,18 @@ int main(int argc, char* argv[]) {
   Vector<double> x({1.0, 1.1, 1.2}), y({2, 3, 4}), z({1.0f, 2.0f, 3.0f});
 
   try{
+    auto x_plus_y = x-y;
+    for(int i=0; i<x_plus_y.len(); ++i){std::cout << x_plus_y[i] << ' ';}
+    std::cout << '\n';
+    // for(auto iter = x_plus_y.begin(); iter != x_plus_y.end(); ++iter){
+    //     std::cout << *iter << ' ';
+    // }
+
     M[{1,9}] = 1.0; // set value at row 0, column 0 to 1.0
+    // for(auto iter = M.cbegin(); iter != M.cend(); ++iter){
+    //     std::cout << *iter;
+    // }
+
     std::cout << M[{1, 9}] << std::endl;
     std::cout << M[{0, 0}] << std::endl;
     std::cout << M({1, 9}) << std::endl;

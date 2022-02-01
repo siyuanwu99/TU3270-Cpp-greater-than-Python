@@ -138,6 +138,11 @@ class Vector {
 
   /** length function for retrieving the length of the vector **/
   int len(void) const { return this->n; }
+
+  /** display the content of the vector **/
+  void display(void) const{
+    for(int i=0; i < this->len(); ++i){std::cout << ' ' << data[i];}
+  }
 };
 
   /** operator* between a scalar and a vector （invoke the internal method） **/
@@ -337,11 +342,13 @@ int main(int argc, char* argv[]) {
 
   try{
 
-    // tests for Vector object
+    /** tests for Vector object **/
     auto x_plus_y = x-y;
     for(int i=0; i<x_plus_y.len(); ++i){std::cout << x_plus_y[i] << ' ';}
     std::cout << '\n';
-    std::cout << dot(x_plus_y, x_plus_y) << std::endl;
+    Vector<double> other(5);
+    other = 1;
+    //std::cout << dot(x_plus_y, other) << std::endl;
     x_plus_y = 4*x_plus_y;
     for(int i=0; i<x_plus_y.len(); ++i){std::cout << x_plus_y[i] << ' ';}
     std::cout << '\n';
@@ -350,22 +357,17 @@ int main(int argc, char* argv[]) {
     //     std::cout << *iter << ' ';
     // }
 
-    // tests for Matrix object
+    /** tests for Matrix object **/
     M[{1,9}] = 1.0; // set value at row 0, column 0 to 1.0
-    // for(auto iter = M.cbegin(); iter != M.cend(); ++iter){
-    //     std::cout << *iter;
-    // }
-
 
     std::cout << M[{1, 9}] << std::endl;
     std::cout << M[{0, 0}] << std::endl;
     std::cout << M({1, 9}) << std::endl;
     std::cout << typeid(M.row()).name() << ' ' << M.col() << std::endl;
     Vector<double> v2 = x;
-    v2 = M1*x;
-    std::cout << 1 << std::endl;
-    std::cout << x[2] << std::endl;
-    std::cout << M({1, 1}) << std::endl;
+    M1[{0, 0}] = 1; M1[{1, 1}] = 1; M1[{2, 2}] = 1;
+    v2 = M1*x_plus_y;
+    v2.display();
   }
   catch(const char* msg){
     std::cerr << msg << std::endl;

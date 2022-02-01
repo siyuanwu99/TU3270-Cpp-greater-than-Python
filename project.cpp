@@ -23,7 +23,11 @@ class Vector {
   /** constructor and destructor **/
   explicit Vector() : n(0), data(nullptr) {}
   explicit Vector(int a) : n(a), data(new T[a]) {}
-  explicit Vector(const std::initializer_list<T>& list)
+  // explicit Vector(const std::initializer_list<T>& list)
+  //     : Vector((int)list.size()) {
+  //   std::uninitialized_copy(list.begin(), list.end(), data);
+  // }
+  Vector(const std::initializer_list<T>& list)
       : Vector((int)list.size()) {
     std::uninitialized_copy(list.begin(), list.end(), data);
   }
@@ -142,6 +146,17 @@ class Vector {
   /** length function for retrieving the length of the vector **/
   int len(void) const { return this->n; }
 };
+
+/** overload operator << for pretty output **/
+template <typename V>
+std::ostream& operator<<(std::ostream& out, const Vector<V>& v) {
+  out << "[";
+  for (int i = 0; i < v.len() - 1; i++) {
+    out << v[i] << ", ";
+  }
+  out << v[v.len() - 1] << "]";
+  return out;
+}
 
 /** operator* between a scalar and a vector （invoke the internal method） **/
 template <typename V, typename U>
@@ -263,16 +278,16 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
   v_k_1(length), p_k_1(length) = 0;
   double alpha, rho_k_1, omega_k_1 = 1;
   double rho_k, beta, omega_k;
-  Vector<T> p_k(length), v_k(length), h(length), x_k(length), s(length), t(length),
-      r_k(length);
+  Vector<T> p_k(length), v_k(length), h(length), x_k(length), s(length),
+      t(length), r_k(length);
 
   for (int k = 1; k <= maxiter; ++k) {
     rho_k = dot(q_0, r_k_1);
-    beta  = (rho_k / rho_k_1) * (alpha / omega_k_1);
-    p_k   = r_k_1 + beta * (p_k_1 - omega_k_1 * v_k_1);
-    v_k   = A * p_k;
+    beta = (rho_k / rho_k_1) * (alpha / omega_k_1);
+    p_k = r_k_1 + beta * (p_k_1 - omega_k_1 * v_k_1);
+    v_k = A * p_k;
     alpha = rho_k / dot(q_0, v_k);
-    h     = x_k_1 + alpha * p_k;
+    h = x_k_1 + alpha * p_k;
 
     if (norm(b - A * h) < tol) {
       x_k = h;
@@ -303,10 +318,34 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
   return -1;
 }
 
+/**
+ * @brief Heun's integration method
+ *  a function that solves a system of first-order explicit ordinary
+ * differential equations by Heun’s method also called modified Euler method
+ * from time $t_n$ to $t_{n+1}$ via
+ * $$\left. \begin{array} { l } { \overline { y } _ { n + 1 } = y _ { n } + h
+ * \cdot f ( y _ { n } , t _ { n } ) } \\ { y _ { n + 1 } = y _ { n } + \frac {
+ * h } { 2 } \cdot ( f ( y _ { n } , t _ { n } ) + f ( \overline { y } _ { n + 1
+ * } , t _ { n + 1 } ) ) } \end{array} \right.$$
+ *
+ * @tparam T type
+ * @param f to pass the vector-valued function f(y(t),t) as a vector of
+ * std::function’s.
+ * @param y serves both as input ($y_n$) and as the result ($y_{n+1}$)
+ * @param h step size
+ * @param t time level $t_n$
+ */
 template <typename T>
-void heun(const Vector<std::function<T(Vector<T> const&, T)> >& f,
-          const Vector<T>& y, T h, T& t) {
-  // Your implementation of the heun function starts here
+void heun(const Vector<std::function<T(Vector<T> const&, T)> >& f, Vector<T>& y,
+          T h, T& t) {
+  T tn = t;
+  T t_ = tn + h;
+  Vector<T> y_hat = y + h * f(y, 1.0);
+  Vector<T> y_ = y + (f(y, tn) + f(y_hat, t_)) * (h / 2.0);
+
+  /** return **/
+  t = t_;
+  y = y_;
 }
 
 template <typename T>
@@ -339,7 +378,7 @@ int main(int argc, char* argv[]) {
 
   try {
     // tests for Vector object
-    auto x_plus_y = x - y;
+    Vector<double> x_plus_y = x - y;
     for (int i = 0; i < x_plus_y.len(); ++i) {
       std::cout << x_plus_y[i] << ' ';
     }
@@ -373,5 +412,34 @@ int main(int argc, char* argv[]) {
   } catch (const char* msg) {
     std::cerr << msg << std::endl;
   }
+
+  /** test for Heun's integration method **/
+  try {
+    double h = 0.1;
+    double t0 = 1.0;
+    Vector<double> y0({1, 1, 1, 1});
+    double t = t0;
+    Vector<double> y = y0;
+    /** f function with lambda expression **/
+    Vector<std::function<double(const Vector<double>&, double)> > f = {
+        [](Vector<double> const& y, double t) { return 2 * t * y[2]; },
+        [](Vector<double> const& y, double t) { return 3 * t * y[3]; },
+        [](Vector<double> const& y, double t) { return t * y[0]; },
+        [](Vector<double> const& y, double t) { return 2 * t * y[1]; },
+    };
+
+    //! bug: no match function for call to f **/
+    // TODO(@edmundwsy): fix this bug **/
+    auto rst = f(y0, 1.0) * 2;
+    std::cout << rst << std::endl;
+
+    heun(f, y0, h, t0);
+    std::cout << "Heun rst: ";
+    std::cout << y << std::endl;
+    std::cout << "Heun rst: " << t << std::endl;
+  } catch (const char* msg) {
+    std::cerr << msg << std::endl;
+  }
+
   return 0;
 }

@@ -85,13 +85,14 @@ class Vector {
   }
 
   /**iterators**/
+  // TODO: cannot use range-based for loop using iterators
   auto begin()const{return this->data.begin();}
   auto end()const{return this->data.end();}
   auto cbegin()const{return this->data.cbegin();}
   auto cend()const{return this->data.cend();}
 
   /**indexing operators**/
-  T& operator[](int i) { return data[i]; }
+  T& operator[](int i){ return data[i]; }
   const T& operator[](int i) const { return data[i]; }
 
   /** operator +*/
@@ -122,6 +123,7 @@ class Vector {
     return v;
   }
 
+  /** operator* between a scalar and a vector **/
   template <typename V>
   Vector<typename std::common_type<V, T>::type>& operator* (const V& scalar) const {
     Vector<typename std::common_type<V, T>::type> nv(this->n);
@@ -130,33 +132,29 @@ class Vector {
     }
     return nv;
   }
-
-  template <typename V>
-  Vector<typename std::common_type<V, T>::type>& operator* (const V & scalar) {
-    Vector<typename std::common_type<V, T>::type> nv(this->n);
-    for (int i = 0; i < this->n; i++) {
-      nv.data[i] = scalar * data[i];
-    }
-    return nv;
-  }
-
   template <typename V, typename U>
   friend Vector<typename std::common_type<V, U>::type>& operator*(
       const V& scalar, const Vector<U>& vec);
 
+  /** length function for retrieving the length of the vector **/
   int len(void) const { return this->n; }
 };
 
+  /** operator* between a scalar and a vector （invoke the internal method） **/
 template <typename V, typename U>
 Vector<typename std::common_type<V, U>::type>& operator*(const V& scalar,
-                                                        const Vector<U>& vec) {
+                                                        const Vector<U>& vec){
   return vec * scalar;
 }
-// TODO: throw exception if length differs
 
+/** dot function for computing the inner product of two vectors **/
 template <typename T, typename U>
 typename std::common_type<T, U>::type dot(const Vector<T>& lhs,
                                           const Vector<U>& rhs) {
+  if(lhs.len() != rhs.len()){
+      throw "Incompatible dimensions between two vectors!";
+  }
+
   typename std::common_type<T, U>::type sum;
   for (auto i = 0; i < lhs.n; i++) {
     sum += lhs[i] * rhs[i];
@@ -164,6 +162,7 @@ typename std::common_type<T, U>::type dot(const Vector<T>& lhs,
   return sum;
 }
 
+/** norm function returning the l2 norm of the vector **/
 template <typename T>
 T norm(const Vector<T>& vec) {
   T sum = 0;
@@ -242,7 +241,7 @@ template <typename V, typename U>
 Vector<typename std::common_type<V, U>::type> operator*(
 const Matrix<V>& lhs, const Vector<U>& rhs){
     if(rhs.len() != lhs.col()){
-        throw "Incomatible dimensions of the vector and the matrix!";
+        throw "Incompatible dimensions of the vector and the matrix!";
     }
     Vector<typename std::common_type<V, U>::type> new_vec(lhs.row());
     for(auto it = lhs.cbegin(); it != lhs.cend(); ++it){
@@ -338,6 +337,7 @@ int main(int argc, char* argv[]) {
 
   try{
     auto x_plus_y = x-y;
+    //x_plus_y = 5 * x_plus_y;
     for(int i=0; i<x_plus_y.len(); ++i){std::cout << x_plus_y[i] << ' ';}
     std::cout << '\n';
     // for(auto iter = x_plus_y.begin(); iter != x_plus_y.end(); ++iter){
@@ -348,6 +348,7 @@ int main(int argc, char* argv[]) {
     // for(auto iter = M.cbegin(); iter != M.cend(); ++iter){
     //     std::cout << *iter;
     // }
+
 
     std::cout << M[{1, 9}] << std::endl;
     std::cout << M[{0, 0}] << std::endl;

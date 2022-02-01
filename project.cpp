@@ -125,8 +125,7 @@ class Vector {
 
   /** operator* between a scalar and a vector **/
   template <typename V>
-  Vector<typename std::common_type<V, T>::type>& operator*(
-      const V& scalar) const {
+  Vector<typename std::common_type<V, T>::type> operator* (const V& scalar) const {
     Vector<typename std::common_type<V, T>::type> nv(this->n);
     for (int i = 0; i < this->n; i++) {
       nv.data[i] = scalar * data[i];
@@ -134,7 +133,7 @@ class Vector {
     return nv;
   }
   template <typename V, typename U>
-  friend Vector<typename std::common_type<V, U>::type>& operator*(
+  friend Vector<typename std::common_type<V, U>::type> operator*(
       const V& scalar, const Vector<U>& vec);
 
   /** length function for retrieving the length of the vector **/
@@ -143,8 +142,8 @@ class Vector {
 
 /** operator* between a scalar and a vector （invoke the internal method） **/
 template <typename V, typename U>
-Vector<typename std::common_type<V, U>::type>& operator*(const V& scalar,
-                                                         const Vector<U>& vec) {
+Vector<typename std::common_type<V, U>::type> operator*(const V& scalar,
+                                                        const Vector<U>& vec){
   return vec * scalar;
 }
 
@@ -157,7 +156,7 @@ typename std::common_type<T, U>::type dot(const Vector<T>& lhs,
   }
 
   typename std::common_type<T, U>::type sum;
-  for (auto i = 0; i < lhs.n; i++) {
+  for (auto i = 0; i < lhs.len(); i++) {
     sum += lhs[i] * rhs[i];
   }
   return sum;
@@ -335,18 +334,23 @@ int main(int argc, char* argv[]) {
   Matrix<double> M(10, 20), M1(10, 3);
   Vector<double> x({1.0, 1.1, 1.2}), y({2, 3, 4}), z({1.0f, 2.0f, 3.0f});
 
-  try {
-    auto x_plus_y = x - y;
-    // x_plus_y = 5 * x_plus_y;
-    for (int i = 0; i < x_plus_y.len(); ++i) {
-      std::cout << x_plus_y[i] << ' ';
-    }
+  try{
+
+    // tests for Vector object
+    auto x_plus_y = x-y;
+    for(int i=0; i<x_plus_y.len(); ++i){std::cout << x_plus_y[i] << ' ';}
     std::cout << '\n';
+    std::cout << dot(x_plus_y, x_plus_y) << std::endl;
+    x_plus_y = 4*x_plus_y;
+    for(int i=0; i<x_plus_y.len(); ++i){std::cout << x_plus_y[i] << ' ';}
+    std::cout << '\n';
+    std::cout << norm(x_plus_y) << std::endl;
     // for(auto iter = x_plus_y.begin(); iter != x_plus_y.end(); ++iter){
     //     std::cout << *iter << ' ';
     // }
 
-    M[{1, 9}] = 1.0;  // set value at row 0, column 0 to 1.0
+    // tests for Matrix object
+    M[{1,9}] = 1.0; // set value at row 0, column 0 to 1.0
     // for(auto iter = M.cbegin(); iter != M.cend(); ++iter){
     //     std::cout << *iter;
     // }

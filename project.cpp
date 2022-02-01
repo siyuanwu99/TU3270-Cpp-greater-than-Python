@@ -63,14 +63,15 @@ class Vector {
     return *this;
   }
 
-  /** change the value of all the entry as a constant **/
-  Vector<T>& operator=(int constant) {
-    for (int i = 0; i < this->n; ++i) {
-      T value = constant;
-      data[i] = value;
-    }
-    return *this;
-  }
+  /**  Segmentation fault here **/
+  // /** change the value of all the entry as a constant **/
+  // Vector<T>& operator=(int constant) {
+  //   for (int i = 0; i < this->n; ++i) {
+  //     T value = constant;
+  //     data[i] = value;
+  //   }
+  //   return *this;
+  // }
 
   /** move assignment **/
   Vector<T>& operator=(Vector<T>&& other) {
@@ -123,15 +124,17 @@ class Vector {
     return v;
   }
 
-  /** operator* between a scalar and a vector **/
+  /** operator* between vector and scalar **/
   template <typename V>
-  Vector<typename std::common_type<V, T>::type> operator* (const V& scalar) const {
+  Vector<typename std::common_type<V, T>::type> operator*(
+      const V& scalar) const {
     Vector<typename std::common_type<V, T>::type> nv(this->n);
     for (int i = 0; i < this->n; i++) {
       nv.data[i] = scalar * data[i];
     }
     return nv;
   }
+  /** operator * between scalar and vector **/
   template <typename V, typename U>
   friend Vector<typename std::common_type<V, U>::type> operator*(
       const V& scalar, const Vector<U>& vec);
@@ -143,7 +146,7 @@ class Vector {
 /** operator* between a scalar and a vector （invoke the internal method） **/
 template <typename V, typename U>
 Vector<typename std::common_type<V, U>::type> operator*(const V& scalar,
-                                                        const Vector<U>& vec){
+                                                        const Vector<U>& vec) {
   return vec * scalar;
 }
 
@@ -256,20 +259,20 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
   int length = b.len();
   auto q_0(b - A * x), r_k_1(b - A * x);
   auto x_k_1 = x;
-  Vector v_k_1(length), p_k_1(length);
+  Vector<T> v_k_1(length), p_k_1(length);
   v_k_1(length), p_k_1(length) = 0;
   double alpha, rho_k_1, omega_k_1 = 1;
   double rho_k, beta, omega_k;
-  Vector p_k(length), v_k(length), h(length), x_k(length), s(length), t(length),
+  Vector<T> p_k(length), v_k(length), h(length), x_k(length), s(length), t(length),
       r_k(length);
 
   for (int k = 1; k <= maxiter; ++k) {
     rho_k = dot(q_0, r_k_1);
-    beta = (rho_k / rho_k_1) * (alpha / omega_k_1);
-    p_k = r_k_1 + beta * (p_k_1 - omega_k_1 * v_k_1);
-    v_k = A * p_k;
+    beta  = (rho_k / rho_k_1) * (alpha / omega_k_1);
+    p_k   = r_k_1 + beta * (p_k_1 - omega_k_1 * v_k_1);
+    v_k   = A * p_k;
     alpha = rho_k / dot(q_0, v_k);
-    h = x_k_1 + alpha * p_k;
+    h     = x_k_1 + alpha * p_k;
 
     if (norm(b - A * h) < tol) {
       x_k = h;
@@ -334,15 +337,18 @@ int main(int argc, char* argv[]) {
   Matrix<double> M(10, 20), M1(10, 3);
   Vector<double> x({1.0, 1.1, 1.2}), y({2, 3, 4}), z({1.0f, 2.0f, 3.0f});
 
-  try{
-
+  try {
     // tests for Vector object
-    auto x_plus_y = x-y;
-    for(int i=0; i<x_plus_y.len(); ++i){std::cout << x_plus_y[i] << ' ';}
+    auto x_plus_y = x - y;
+    for (int i = 0; i < x_plus_y.len(); ++i) {
+      std::cout << x_plus_y[i] << ' ';
+    }
     std::cout << '\n';
     std::cout << dot(x_plus_y, x_plus_y) << std::endl;
-    x_plus_y = 4*x_plus_y;
-    for(int i=0; i<x_plus_y.len(); ++i){std::cout << x_plus_y[i] << ' ';}
+    x_plus_y = 4 * x_plus_y;
+    for (int i = 0; i < x_plus_y.len(); ++i) {
+      std::cout << x_plus_y[i] << ' ';
+    }
     std::cout << '\n';
     std::cout << norm(x_plus_y) << std::endl;
     // for(auto iter = x_plus_y.begin(); iter != x_plus_y.end(); ++iter){
@@ -350,7 +356,7 @@ int main(int argc, char* argv[]) {
     // }
 
     // tests for Matrix object
-    M[{1,9}] = 1.0; // set value at row 0, column 0 to 1.0
+    M[{1, 9}] = 1.0;  // set value at row 0, column 0 to 1.0
     // for(auto iter = M.cbegin(); iter != M.cend(); ++iter){
     //     std::cout << *iter;
     // }

@@ -340,7 +340,11 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
     beta = (rho_k / rho_k_1) * (alpha / omega_k_1);
     p_k = r_k_1 + beta * (p_k_1 - omega_k_1 * v_k_1);
     v_k = A * p_k;
-    alpha = rho_k / dot(q_0, v_k);
+    if(dot(q_0, v_k) != 0){
+      alpha = rho_k / dot(q_0, v_k);}
+    else{
+      alpha = 0;
+    }
     h = x_k_1 + alpha * p_k;
     std::cout << "################################" << std::endl;
     std::cout << "iteration: " << k << std::endl;
@@ -491,17 +495,16 @@ int main(int argc, char* argv[]) {
   // Your testing of the simplest walker class starts here
   // test Matrix
   try {
-    Matrix<float> M(10, 20), M1(10, 3), A(5, 5);
-    Vector<float> x_({1,1,1,1,1}), b({1, 1, 1, 1, 1});
-    //A[{0, 0}] = 1;
-    A[{0, 1}] = 1;
+    Matrix<double> M(10, 20), M1(10, 3), A(5, 5);
+    Vector<double> x_({1,1,1,1,1}), b({1, 1, 1, 1, 1});
+    A[{0, 0}] = 1;
     A[{1, 1}] = 1;
     A[{2, 2}] = 1;
     A[{3, 3}] = 1;
     A[{4, 4}] = 1;
-    //auto flag = bicgstab(A, b, x_);
-    //std::cout << x_ << std::endl;
-    //std::cout << flag << std::endl;
+    auto flag = bicgstab(A, b, x_);
+    std::cout << x_ << std::endl;
+    std::cout << flag << std::endl;
     Vector<double> x({1.0, 1.1, 1.2});
     Vector<int> y({2, 3, 4});
     Vector<float> z({1.0f, 2.0f, 3.0f});

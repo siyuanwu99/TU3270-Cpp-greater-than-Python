@@ -316,13 +316,16 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
   if (A.col() != b.len() || A.col() != x.len()) {
     throw "Incompatible dimensions of vector and matrix!";
   }
+  //TODO: fail safe: make sure A, b, x have initial values!!
 
   int length = b.len();
   auto q_0(b - A * x), r_k_1(b - A * x);
   auto x_k_1 = x;
   Vector<T> v_k_1(length), p_k_1(length);
   v_k_1, p_k_1 = 0;
-  T alpha, rho_k_1, omega_k_1 = 1;
+  T alpha = 1;
+  T rho_k_1 = 1; 
+  T omega_k_1 = 1;
   T rho_k, beta, omega_k;
   Vector<T> p_k(length), v_k(length), h(length), x_k(length), s(length),
       t(length), r_k(length);
@@ -330,11 +333,24 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
   for (int k = 1; k <= maxiter; ++k) {
     rho_k = dot(q_0, r_k_1);
     beta = (rho_k / rho_k_1) * (alpha / omega_k_1);
-    // std::cout << typeid(beta).name() << std::endl;
     p_k = r_k_1 + beta * (p_k_1 - omega_k_1 * v_k_1);
     v_k = A * p_k;
     alpha = rho_k / dot(q_0, v_k);
     h = x_k_1 + alpha * p_k;
+    std::cout << "################################" << std::endl;
+    std::cout << "rho_k_1: " << rho_k_1 << std::endl;
+    std::cout << "rho_k / rho_k_1: " << rho_k / rho_k_1 << std::endl;
+    std::cout << "beta: " << beta << std::endl;
+    std::cout << "r_k_1" << r_k_1 << std::endl;
+    std::cout << "p_k" << p_k << std::endl;
+    std::cout << "vk" << v_k << std::endl;
+    std::cout << "q0: " << q_0 <<std::endl;
+    std::cout << "dot(q_0, v_k): " << dot(q_0, v_k) << std::endl;
+    std::cout << "x_k_1: " << x_k_1 << std::endl;
+    std::cout << "alpha: " << alpha << std::endl;
+    std::cout << "h: " << h << std::endl;
+
+    std::cout << "iteration: " << k << std::endl;
 
     if (norm(b - A * h) < tol) {
       x_k = h;
@@ -346,11 +362,13 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
     t = A * s;
     omega_k = dot(t, s) / dot(t, t);
     x_k = h + omega_k * s;
-    x = x_k;
 
     if (norm(b - A * x_k) < tol) {
+      x = x_k;
       return k;
     }
+
+    std::cout << "error: " << norm(b - A * x_k) << std::endl;
 
     r_k = s - omega_k * t;
 
@@ -468,8 +486,8 @@ int main(int argc, char* argv[]) {
   // Your testing of the simplest walker class starts here
   // test Matrix
   try {
-    Matrix<float> M(10, 20), M1(10, 3), A(3, 3);
-    Vector<float> x_({20, 50, 0.5}), b({1, 1, 1});
+    Matrix<double> M(10, 20), M1(10, 3), A(3, 3);
+    Vector<double> x_({1,1,1}), b({39, 39, 1});
     A[{0, 0}] = 1;
     A[{1, 1}] = 1;
     A[{2, 2}] = 1;
@@ -580,11 +598,13 @@ int main(int argc, char* argv[]) {
             << std::endl;
 
   /** test for bicgstab */
-  Matrix<float> A(10, 10);
+  Matrix<double> A(10, 10);
   A = 1;
-  Vector<float> b(10);
+  Vector<double> b(10);
   b = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-  Vector<float> s(10);
+  Vector<double> s(10);
+  s = 5;
+  std::cout << "BICGSTAB initial guess s: " << s << std::endl;
 
   int n = bicgstab(A, b, s);
   std::cout << "BICGSTAB Matrix A: " << A << std::endl;

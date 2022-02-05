@@ -154,7 +154,15 @@ Vector<typename std::common_type<V, U>::type> operator*(const V& scalar,
   return vec * scalar;
 }
 
-/** dot function for computing the inner product of two vectors **/
+/**
+ * @brief dot
+ * function for computing the inner product of two vectors
+ * @tparam T 
+ * @tparam U 
+ * @param lhs 
+ * @param rhs 
+ * @return std::common_type<T, U>::type 
+ */
 template <typename T, typename U>
 typename std::common_type<T, U>::type dot(const Vector<T>& lhs,
                                           const Vector<U>& rhs) {
@@ -169,7 +177,13 @@ typename std::common_type<T, U>::type dot(const Vector<T>& lhs,
   return sum;
 }
 
-/** norm function returning the l2 norm of the vector **/
+/**
+ * @brief norm
+ * norm function returning the l2 norm of the vector
+ * @tparam T 
+ * @param vec 
+ * @return T 
+ */
 template <typename T>
 T norm(const Vector<T>& vec) {
   T sum = 0;
@@ -525,15 +539,15 @@ int main(int argc, char* argv[]) {
     };
 
     auto rst = toVector(f, y0, t0);
-    std::cout << "rst:  " << rst << std::endl;
+    std::cout << "[toVector] rst:  " << rst << std::endl;
 
     heun(f, y, h, t);
     heun(f, y, h, t);
     heun(f, y, h, t);
-    std::cout << "Heun rst: ";
+    std::cout << "[Heun] rst: ";
     std::cout << y << '\t' << typeid(y).name() << std::endl;
-    std::cout << "Heun rst: " << t << std::endl;
-    std::cout << "Heun Success" << std::endl;
+    std::cout << "[Heun] rst: " << t << std::endl;
+    std::cout << "[Heun] Success" << std::endl;
 
   } catch (const char* msg) {
     std::cerr << msg << std::endl;
@@ -555,14 +569,14 @@ int main(int argc, char* argv[]) {
   Vector<int> y({2, 3, 4});
   Vector<float> z({1.0f, 2.0f, 3.0f});
   auto z_dot = dot(z, y);
-  std::cout << "dot between float and int: " << typeid(z_dot).name() << '\t'
+  std::cout << "[dot] between float and int: " << typeid(z_dot).name() << '\t'
             << z_dot << std::endl;
   auto y_dot = dot(y, y);
-  std::cout << "dot between int and int: " << typeid(y_dot).name() << '\t'
+  std::cout << "[dot] between int and int: " << typeid(y_dot).name() << '\t'
             << y_dot << std::endl;
 
   auto z_norm = norm(z);
-  std::cout << "norm of float: " << typeid(z_norm).name() << '\t' << z_norm
+  std::cout << "[norm] of float: " << typeid(z_norm).name() << '\t' << z_norm
             << std::endl;
 
   /** test for bicgstab */

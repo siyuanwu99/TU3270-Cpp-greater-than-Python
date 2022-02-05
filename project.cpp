@@ -577,6 +577,9 @@ int main(int argc, char* argv[]) {
   std::cout << "BICGSTAB Vector b: " << b << std::endl;
   std::cout << "BICGSTAB Solution: " << s << '\t' << typeid(s[0]).name() << std::endl;
   std::cout << "BICGSTAB Status n: " << n << std::endl;
-
+  /**
+   * @brief Expected value from matlab
+   * -0.4727   -0.2455   -0.0182    0.2091    0.4364    0.6636    0.8909    1.1182    1.3455    1.5727
+   */
   return 0;
 }

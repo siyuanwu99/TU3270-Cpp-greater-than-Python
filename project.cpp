@@ -154,7 +154,7 @@ typename std::common_type<T, U>::type dot(const Vector<T>& lhs,
     throw "Incompatible dimensions between two vectors!";
   }
 
-  typename std::common_type<T, U>::type sum;
+  typename std::common_type<T, U>::type sum = 0;
   for (auto i = 0; i < lhs.len(); i++) {
     sum += lhs[i] * rhs[i];
   }
@@ -256,8 +256,8 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
   auto x_k_1 = x;
   Vector<T> v_k_1(length), p_k_1(length);
   v_k_1(length), p_k_1(length) = 0;
-  double alpha, rho_k_1, omega_k_1 = 1;
-  double rho_k, beta, omega_k;
+  T alpha, rho_k_1, omega_k_1 = 1;
+  T rho_k, beta, omega_k;
   Vector<T> p_k(length), v_k(length), h(length), x_k(length), s(length),
       t(length), r_k(length);
 
@@ -404,6 +404,9 @@ int main(int argc, char* argv[]) {
   Vector<double> x({1.0, 1.1, 1.2});
   Vector<int> y({2, 3, 4});
   Vector<float> z({1.0f, 2.0f, 3.0f});
+  Vector<float> z2 = z;
+
+  /** test for move assignment and move constructor */
   std::cout << "z before move: " << z << std::endl;
   // Vector<double> w(std::move(z));
   Vector<float> w;
@@ -488,6 +491,19 @@ int main(int argc, char* argv[]) {
   // } catch (const char* msg) {
   //   std::cerr << msg << std::endl;
   // }
+
+  /** test for variable type */
+
+  auto z_dot = dot(z2, y);
+  std::cout << "dot between float and int: " << typeid(z_dot).name() << '\t'
+            << z_dot << std::endl;
+  auto y_dot = dot(y, y);
+  std::cout << "dot between int and int: " << typeid(y_dot).name() << '\t'
+            << y_dot << std::endl;
+
+  auto z_norm = norm(z2);
+  std::cout << "norm of float: " << typeid(z_norm).name() << '\t' << z_norm
+            << std::endl;
 
   return 0;
 }

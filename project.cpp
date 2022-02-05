@@ -14,7 +14,6 @@
  */
 template <typename T>
 class Vector {
-  // Your implementation of the Vector class starts here
  private:
   int n;
   T* data;
@@ -23,12 +22,7 @@ class Vector {
   /** constructor and destructor **/
   explicit Vector() : n(0), data(nullptr) {}
   explicit Vector(int a) : n(a), data(new T[a]) {}
-  // explicit Vector(const std::initializer_list<T>& list)
-  //     : Vector((int)list.size()) {
-  //   std::uninitialized_copy(list.begin(), list.end(), data);
-  // }
-  Vector(const std::initializer_list<T>& list)
-      : Vector((int)list.size()) {
+  Vector(const std::initializer_list<T>& list) : Vector((int)list.size()) {
     std::uninitialized_copy(list.begin(), list.end(), data);
   }
 
@@ -37,13 +31,11 @@ class Vector {
     for (auto i = 0; i < other.n; i++) {
       data[i] = other.data[i];
     }
-    // std::cout<<"copy constructor\n";
   }
 
   /** move constructor **/
   Vector(Vector<T>&& other) : n(other.n), data(other.data) {
     other.n = 0;
-    delete[] other.data;
     other.data = nullptr;
   }
 
@@ -67,30 +59,19 @@ class Vector {
     return *this;
   }
 
-  /**  Segmentation fault here **/
-  // /** change the value of all the entry as a constant **/
-  // Vector<T>& operator=(int constant) {
-  //   for (int i = 0; i < this->n; ++i) {
-  //     T value = constant;
-  //     data[i] = value;
-  //   }
-  //   return *this;
-  // }
-
   /** move assignment **/
   Vector<T>& operator=(Vector<T>&& other) {
     if (this != &other) {
-      std::swap(this->data, other.data);
-      std::swap(this->n, other.n);
+      delete[] data;
+      data = other.data;
+      n = other.n;
       other.n = 0;
-      delete[] other.data;
       other.data = nullptr;
     }
     return *this;
   }
 
   /**iterators**/
-  // TODO(@edmundwsy): cannot use range-based for loop using iterators
   auto begin() const { return this->data.begin(); }
   auto end() const { return this->data.end(); }
   auto cbegin() const { return this->data.cbegin(); }
@@ -270,7 +251,6 @@ Vector<typename std::common_type<V, U>::type> operator*(const Matrix<V>& lhs,
 template <typename T>
 int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
              T tol = (T)1e-8, int maxiter = 100) {
-  // Your implementation of the bicgstab function starts here
   int length = b.len();
   auto q_0(b - A * x), r_k_1(b - A * x);
   auto x_k_1 = x;
@@ -320,15 +300,16 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
 
 /**
  * @brief convert f(y, t) result to vector format
- * 
+ *
  * @tparam T typename
  * @param f function, Vector of std::function
  * @param y function's argument, Vector
  * @param t function's argument, double/float/int
- * @return Vector<T> 
+ * @return Vector<T>
  */
 template <typename T>
-Vector<T> toVector(const Vector<std::function<T(Vector<T> const &, T)>> & f, const Vector<T>& y, T t) {
+Vector<T> toVector(const Vector<std::function<T(const Vector<T>&, T)>>& f,
+                   const Vector<T>& y, T t) {
   int N = y.len();
   Vector<T> rst(N);
   for (int i = 0; i < 4; i++) {
@@ -355,12 +336,12 @@ Vector<T> toVector(const Vector<std::function<T(Vector<T> const &, T)>> & f, con
  * @param t time level $t_n$
  */
 template <typename T>
-void heun(const Vector<std::function<T(Vector<T> const&, T)> >& f, Vector<T>& y,
+void heun(const Vector<std::function<T(const Vector<T>&, T)>>& f, Vector<T>& y,
           T h, T& t) {
   T tn = t;
   T t_ = tn + h;
   Vector<T> y_hat = y + h * toVector(f, y, tn);
-  Vector<T> y_ = y + (toVector(f, y, tn) + toVector(f, y_hat, t_)) * (h / 2.0);
+  Vector<T> y_ = y + (toVector(f, y, tn) + toVector(f, y_hat, t_)) * (h / (T)2);
 
   /** return **/
   t = t_;
@@ -375,7 +356,6 @@ class SimplestWalker {
   T slope;
 
  public:
- 
   //** Constructor **//
   SimplestWalker(const Vector<T>& y0, T t0, T gamma)
       : y(y0), t(t0), slope(gamma) {}
@@ -385,23 +365,33 @@ class SimplestWalker {
     dot[0] = y_cur[2];
     dot[1] = y_cur[3];
     dot[3] = sin(dot[1] - slope);
-    dot[2] = dot[3] + y_cur[3] * y_cur[3] * sin(y_cur[0]) - cos(y_cur[1] - slope) * sin(y_cur[0]);
+    dot[2] = dot[3] + y_cur[3] * y_cur[3] * sin(y_cur[0]) -
+             cos(y_cur[1] - slope) * sin(y_cur[0]);
     return dot;
   }
 
-  T dot0(const Vector<T>& y_cur, T t){return derivative(y_cur)[0];}
-  T dot1(const Vector<T>& y_cur, T t){return derivative(y_cur)[1];}
-  T dot2(const Vector<T>& y_cur, T t){return derivative(y_cur)[2];}
-  T dot3(const Vector<T>& y_cur, T t){return derivative(y_cur)[3];}
+  T dot0(const Vector<T>& y_cur, T t) { return derivative(y_cur)[0]; }
+  T dot1(const Vector<T>& y_cur, T t) { return derivative(y_cur)[1]; }
+  T dot2(const Vector<T>& y_cur, T t) { return derivative(y_cur)[2]; }
+  T dot3(const Vector<T>& y_cur, T t) { return derivative(y_cur)[3]; }
 
-  const Vector<T>& step(T h){
-    std::function<T(const Vector<T>&, T)> f1 = bind(&SimplestWalker::dot0, this, std::placeholders::_1, std::placeholders::_2);
-    std::function<T(const Vector<T>&, T)> f2 = bind(&SimplestWalker::dot1, this, std::placeholders::_1, std::placeholders::_2);
-    std::function<T(const Vector<T>&, T)> f3 = bind(&SimplestWalker::dot2, this, std::placeholders::_1, std::placeholders::_2);
-    std::function<T(const Vector<T>&, T)> f4 = bind(&SimplestWalker::dot3, this, std::placeholders::_1, std::placeholders::_2);
-    Vector<std::function<T(const Vector<T>&, T)> > f = {f1, f2, f3, f4};
-    
-    std::cout <<"derivative: "<< derivative(y)[0] <<' '<< derivative(y)[1] <<' '<< derivative(y)[2] <<' '<<derivative(y)[3]<<'\n';
+  const Vector<T>& step(T h) {
+    std::function<T(const Vector<T>&, T)> f1 =
+        bind(&SimplestWalker::dot0, this, std::placeholders::_1,
+             std::placeholders::_2);
+    std::function<T(const Vector<T>&, T)> f2 =
+        bind(&SimplestWalker::dot1, this, std::placeholders::_1,
+             std::placeholders::_2);
+    std::function<T(const Vector<T>&, T)> f3 =
+        bind(&SimplestWalker::dot2, this, std::placeholders::_1,
+             std::placeholders::_2);
+    std::function<T(const Vector<T>&, T)> f4 =
+        bind(&SimplestWalker::dot3, this, std::placeholders::_1,
+             std::placeholders::_2);
+    Vector<std::function<T(const Vector<T>&, T)>> f = {f1, f2, f3, f4};
+
+    std::cout << "derivative: " << derivative(y)[0] << ' ' << derivative(y)[1]
+              << ' ' << derivative(y)[2] << ' ' << derivative(y)[3] << '\n';
     heun<T>(f, y, h, t);
     return y;
   }
@@ -411,7 +401,15 @@ int main(int argc, char* argv[]) {
   // Your testing of the simplest walker class starts here
   // test Matrix
   Matrix<double> M(10, 20), M1(10, 3);
-  Vector<double> x({1.0, 1.1, 1.2}), y({2, 3, 4}), z({1.0f, 2.0f, 3.0f});
+  Vector<double> x({1.0, 1.1, 1.2});
+  Vector<int> y({2, 3, 4});
+  Vector<float> z({1.0f, 2.0f, 3.0f});
+  std::cout << "z before move: " << z << std::endl;
+  // Vector<double> w(std::move(z));
+  Vector<float> w;
+  w = std::move(z);
+  std::cout << "w after move: " << w << std::endl;
+  // std::cout << "z after move: " << z << std::endl;
 
   try {
     // tests for Vector object
@@ -452,25 +450,25 @@ int main(int argc, char* argv[]) {
 
   /** test for Heun's integration method **/
   try {
-    double h = 0.1;
-    double t0 = 1.0;
-    const Vector<double> y0({1, 1, 1, 1});
+    double h = 0.01;
+    double t0 = 2.0;
+    const Vector<double> y0({2, 1, 1, 4});
     double t = t0;
     Vector<double> y = y0;
 
     /** @brief vector of functions in lambda expression */
-    Vector<std::function<double(const Vector<double>&, double)> > f = {
+    Vector<std::function<double(const Vector<double>&, double)>> f = {
         [](Vector<double> const& y, double t) { return 2 * t * y[2]; },
         [](Vector<double> const& y, double t) { return 3 * t * y[3]; },
         [](Vector<double> const& y, double t) { return t * y[0]; },
         [](Vector<double> const& y, double t) { return 2 * t * y[1]; },
     };
 
-    // auto rst = f[0, 1, 2, 3](y0, t0);
-    // std::cout << "rst:  " << rst << std::endl;
     auto rst = toVector(f, y0, t0);
     std::cout << "rst:  " << rst << std::endl;
 
+    heun(f, y, h, t);
+    heun(f, y, h, t);
     heun(f, y, h, t);
     std::cout << "Heun rst: ";
     std::cout << y << std::endl;
@@ -481,15 +479,15 @@ int main(int argc, char* argv[]) {
   }
 
   /** test for simplest walker **/
-  try {
-    Vector<double> y0({0.4, 0.2, 0, -0.2});
-    SimplestWalker<double> sw(y0, 0, 0.009);
-    for(auto i=0; i<20; i++){
-      sw.step(0.01);
-    }
-  } catch (const char* msg) {
-    std::cerr << msg << std::endl;
-  }
+  // try {
+  //   Vector<double> y0({0.4, 0.2, 0, -0.2});
+  //   SimplestWalker<double> sw(y0, 0, 0.009);
+  //   for (auto i = 0; i < 20; i++) {
+  //     sw.step(0.01);
+  //   }
+  // } catch (const char* msg) {
+  //   std::cerr << msg << std::endl;
+  // }
 
   return 0;
 }

@@ -23,7 +23,11 @@ class Vector {
   /** constructor and destructor **/
   explicit Vector() : n(0), data(nullptr) {}
   explicit Vector(int a) : n(a), data(new T[a]) {}
-  explicit Vector(const std::initializer_list<T>& list)
+  // explicit Vector(const std::initializer_list<T>& list)
+  //     : Vector((int)list.size()) {
+  //   std::uninitialized_copy(list.begin(), list.end(), data);
+  // }
+  Vector(const std::initializer_list<T>& list)
       : Vector((int)list.size()) {
     std::uninitialized_copy(list.begin(), list.end(), data);
   }
@@ -63,14 +67,15 @@ class Vector {
     return *this;
   }
 
-  /** change the value of all the entry as a constant **/
-  Vector<T>& operator=(int constant) {
-    for (int i = 0; i < this->n; ++i) {
-      T value = constant;
-      data[i] = value;
-    }
-    return *this;
-  }
+  /**  Segmentation fault here **/
+  // /** change the value of all the entry as a constant **/
+  // Vector<T>& operator=(int constant) {
+  //   for (int i = 0; i < this->n; ++i) {
+  //     T value = constant;
+  //     data[i] = value;
+  //   }
+  //   return *this;
+  // }
 
   /** move assignment **/
   Vector<T>& operator=(Vector<T>&& other) {
@@ -123,32 +128,40 @@ class Vector {
     return v;
   }
 
-  /** operator* between a scalar and a vector **/
+  /** operator* between vector and scalar **/
   template <typename V>
-  Vector<typename std::common_type<V, T>::type> operator* (const V& scalar) const {
+  Vector<typename std::common_type<V, T>::type> operator*(
+      const V& scalar) const {
     Vector<typename std::common_type<V, T>::type> nv(this->n);
     for (int i = 0; i < this->n; i++) {
       nv.data[i] = scalar * data[i];
     }
     return nv;
   }
+  /** operator * between scalar and vector **/
   template <typename V, typename U>
   friend Vector<typename std::common_type<V, U>::type> operator*(
       const V& scalar, const Vector<U>& vec);
 
   /** length function for retrieving the length of the vector **/
   int len(void) const { return this->n; }
-
-  /** display the content of the vector **/
-  void display(void) const{
-    for(int i=0; i < this->len(); ++i){std::cout << ' ' << data[i];}
-  }
 };
+
+/** overload operator << for pretty output **/
+template <typename V>
+std::ostream& operator<<(std::ostream& out, const Vector<V>& v) {
+  out << "[";
+  for (int i = 0; i < v.len() - 1; i++) {
+    out << v[i] << ", ";
+  }
+  out << v[v.len() - 1] << "]";
+  return out;
+}
 
 /** operator* between a scalar and a vector （invoke the internal method） **/
 template <typename V, typename U>
 Vector<typename std::common_type<V, U>::type> operator*(const V& scalar,
-                                                        const Vector<U>& vec){
+                                                        const Vector<U>& vec) {
   return vec * scalar;
 }
 
@@ -261,12 +274,12 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
   int length = b.len();
   auto q_0(b - A * x), r_k_1(b - A * x);
   auto x_k_1 = x;
-  Vector v_k_1(length), p_k_1(length);
+  Vector<T> v_k_1(length), p_k_1(length);
   v_k_1(length), p_k_1(length) = 0;
   double alpha, rho_k_1, omega_k_1 = 1;
   double rho_k, beta, omega_k;
-  Vector p_k(length), v_k(length), h(length), x_k(length), s(length), t(length),
-      r_k(length);
+  Vector<T> p_k(length), v_k(length), h(length), x_k(length), s(length),
+      t(length), r_k(length);
 
   for (int k = 1; k <= maxiter; ++k) {
     rho_k = dot(q_0, r_k_1);
@@ -305,10 +318,53 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
   return -1;
 }
 
+/**
+ * @brief convert f(y, t) result to vector format
+ * 
+ * @tparam T typename
+ * @param f function, Vector of std::function
+ * @param y function's argument, Vector
+ * @param t function's argument, double/float/int
+ * @return Vector<T> 
+ */
 template <typename T>
-void heun(const Vector<std::function<T(Vector<T> const&, T)> >& f,
-          const Vector<T>& y, T h, T& t) {
-  // Your implementation of the heun function starts here
+Vector<T> toVector(const Vector<std::function<T(Vector<T> const &, T)>> & f, const Vector<T>& y, T t) {
+  int N = y.len();
+  Vector<T> rst(N);
+  for (int i = 0; i < 4; i++) {
+    rst[i] = f[i](y, t);
+  }
+  return rst;
+}
+
+/**
+ * @brief Heun's integration method
+ *  a function that solves a system of first-order explicit ordinary
+ * differential equations by Heun’s method also called modified Euler method
+ * from time $t_n$ to $t_{n+1}$ via
+ * $$\left. \begin{array} { l } { \overline { y } _ { n + 1 } = y _ { n } + h
+ * \cdot f ( y _ { n } , t _ { n } ) } \\ { y _ { n + 1 } = y _ { n } + \frac {
+ * h } { 2 } \cdot ( f ( y _ { n } , t _ { n } ) + f ( \overline { y } _ { n + 1
+ * } , t _ { n + 1 } ) ) } \end{array} \right.$$
+ *
+ * @tparam T type
+ * @param f to pass the vector-valued function f(y(t),t) as a vector of
+ * std::function’s.
+ * @param y serves both as input ($y_n$) and as the result ($y_{n+1}$)
+ * @param h step size
+ * @param t time level $t_n$
+ */
+template <typename T>
+void heun(const Vector<std::function<T(Vector<T> const&, T)> >& f, Vector<T>& y,
+          T h, T& t) {
+  T tn = t;
+  T t_ = tn + h;
+  Vector<T> y_hat = y + h * toVector(f, y, tn);
+  Vector<T> y_ = y + (toVector(f, y, tn) + toVector(f, y_hat, t_)) * (h / 2.0);
+
+  /** return **/
+  t = t_;
+  y = y_;
 }
 
 template <typename T>
@@ -339,36 +395,72 @@ int main(int argc, char* argv[]) {
   Matrix<double> M(10, 20), M1(10, 3);
   Vector<double> x({1.0, 1.1, 1.2}), y({2, 3, 4}), z({1.0f, 2.0f, 3.0f});
 
-  try{
-
-    /** tests for Vector object **/
-    auto x_plus_y = x-y;
-    for(int i=0; i<x_plus_y.len(); ++i){std::cout << x_plus_y[i] << ' ';}
+  try {
+    // tests for Vector object
+    Vector<double> x_plus_y = x - y;
+    for (int i = 0; i < x_plus_y.len(); ++i) {
+      std::cout << x_plus_y[i] << ' ';
+    }
     std::cout << '\n';
-    Vector<double> other(5);
-    other = 1;
-    //std::cout << dot(x_plus_y, other) << std::endl;
-    x_plus_y = 4*x_plus_y;
-    for(int i=0; i<x_plus_y.len(); ++i){std::cout << x_plus_y[i] << ' ';}
+    std::cout << dot(x_plus_y, x_plus_y) << std::endl;
+    x_plus_y = 4 * x_plus_y;
+    for (int i = 0; i < x_plus_y.len(); ++i) {
+      std::cout << x_plus_y[i] << ' ';
+    }
     std::cout << '\n';
     std::cout << norm(x_plus_y) << std::endl;
     // for(auto iter = x_plus_y.begin(); iter != x_plus_y.end(); ++iter){
     //     std::cout << *iter << ' ';
     // }
 
-    /** tests for Matrix object **/
-    M[{1,9}] = 1.0; // set value at row 0, column 0 to 1.0
+    // tests for Matrix object
+    M[{1, 9}] = 1.0;  // set value at row 0, column 0 to 1.0
+    // for(auto iter = M.cbegin(); iter != M.cend(); ++iter){
+    //     std::cout << *iter;
+    // }
+
     std::cout << M[{1, 9}] << std::endl;
     std::cout << M[{0, 0}] << std::endl;
     std::cout << M({1, 9}) << std::endl;
     std::cout << typeid(M.row()).name() << ' ' << M.col() << std::endl;
     Vector<double> v2 = x;
-    M1[{0, 0}] = 1; M1[{1, 1}] = 1; M1[{2, 2}] = 1;
-    v2 = M1*x_plus_y;
-    v2.display();
-    }
-  catch(const char* msg){
+    v2 = M1 * x;
+    std::cout << 1 << std::endl;
+    std::cout << x[2] << std::endl;
+    std::cout << M({1, 1}) << std::endl;
+  } catch (const char* msg) {
     std::cerr << msg << std::endl;
   }
+
+  /** test for Heun's integration method **/
+  try {
+    double h = 0.1;
+    double t0 = 1.0;
+    const Vector<double> y0({1, 1, 1, 1});
+    double t = t0;
+    Vector<double> y = y0;
+
+    /** @brief vector of functions in lambda expression */
+    Vector<std::function<double(const Vector<double>&, double)> > f = {
+        [](Vector<double> const& y, double t) { return 2 * t * y[2]; },
+        [](Vector<double> const& y, double t) { return 3 * t * y[3]; },
+        [](Vector<double> const& y, double t) { return t * y[0]; },
+        [](Vector<double> const& y, double t) { return 2 * t * y[1]; },
+    };
+
+    // auto rst = f[0, 1, 2, 3](y0, t0);
+    // std::cout << "rst:  " << rst << std::endl;
+    auto rst = toVector(f, y0, t0);
+    std::cout << "rst:  " << rst << std::endl;
+
+    heun(f, y, h, t);
+    std::cout << "Heun rst: ";
+    std::cout << y << std::endl;
+    std::cout << "Heun rst: " << t << std::endl;
+    std::cout << "Heun Success" << std::endl;
+  } catch (const char* msg) {
+    std::cerr << msg << std::endl;
+  }
+
   return 0;
 }

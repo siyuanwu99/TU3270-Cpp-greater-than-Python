@@ -484,7 +484,7 @@ int main(int argc, char* argv[]) {
   try {
     Vector<double> y0({0.4, 0.2, 0, -0.2});
     SimplestWalker<double> sw(y0, 0, 0.009);
-    for(auto i=0; i<0.5; i+=0.01){
+    for(auto i=0; i<20; i++){
       sw.step(0.01);
     }
   } catch (const char* msg) {

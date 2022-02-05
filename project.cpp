@@ -162,7 +162,7 @@ typename std::common_type<T, U>::type dot(const Vector<T>& lhs,
     throw "Incompatible dimensions between two vectors!";
   }
 
-  typename std::common_type<T, U>::type sum;
+  typename std::common_type<T, U>::type sum = 0;
   for (auto i = 0; i < lhs.len(); i++) {
     sum += lhs[i] * rhs[i];
   }

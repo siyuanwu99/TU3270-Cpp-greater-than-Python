@@ -319,6 +319,25 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
 }
 
 /**
+ * @brief convert f(y, t) result to vector format
+ * 
+ * @tparam T typename
+ * @param f function, Vector of std::function
+ * @param y function's argument, Vector
+ * @param t function's argument, double/float/int
+ * @return Vector<T> 
+ */
+template <typename T>
+Vector<T> toVector(const Vector<std::function<T(Vector<T> const &, T)>> & f, const Vector<T>& y, T t) {
+  int N = y.len();
+  Vector<T> rst(N);
+  for (int i = 0; i < 4; i++) {
+    rst[i] = f[i](y, t);
+  }
+  return rst;
+}
+
+/**
  * @brief Heun's integration method
  *  a function that solves a system of first-order explicit ordinary
  * differential equations by Heun’s method also called modified Euler method
@@ -340,8 +359,8 @@ void heun(const Vector<std::function<T(Vector<T> const&, T)> >& f, Vector<T>& y,
           T h, T& t) {
   T tn = t;
   T t_ = tn + h;
-  Vector<T> y_hat = y + h * f(y, 1.0);
-  Vector<T> y_ = y + (f(y, tn) + f(y_hat, t_)) * (h / 2.0);
+  Vector<T> y_hat = y + h * toVector(f, y, tn);
+  Vector<T> y_ = y + (toVector(f, y, tn) + toVector(f, y_hat, t_)) * (h / 2.0);
 
   /** return **/
   t = t_;
@@ -417,10 +436,11 @@ int main(int argc, char* argv[]) {
   try {
     double h = 0.1;
     double t0 = 1.0;
-    Vector<double> y0({1, 1, 1, 1});
+    const Vector<double> y0({1, 1, 1, 1});
     double t = t0;
     Vector<double> y = y0;
-    /** f function with lambda expression **/
+
+    /** @brief vector of functions in lambda expression */
     Vector<std::function<double(const Vector<double>&, double)> > f = {
         [](Vector<double> const& y, double t) { return 2 * t * y[2]; },
         [](Vector<double> const& y, double t) { return 3 * t * y[3]; },
@@ -428,15 +448,16 @@ int main(int argc, char* argv[]) {
         [](Vector<double> const& y, double t) { return 2 * t * y[1]; },
     };
 
-    //! bug: no match function for call to f **/
-    // TODO(@edmundwsy): fix this bug **/
-    auto rst = f(y0, 1.0) * 2;
-    std::cout << rst << std::endl;
+    // auto rst = f[0, 1, 2, 3](y0, t0);
+    // std::cout << "rst:  " << rst << std::endl;
+    auto rst = toVector(f, y0, t0);
+    std::cout << "rst:  " << rst << std::endl;
 
-    heun(f, y0, h, t0);
+    heun(f, y, h, t);
     std::cout << "Heun rst: ";
     std::cout << y << std::endl;
     std::cout << "Heun rst: " << t << std::endl;
+    std::cout << "Heun Success" << std::endl;
   } catch (const char* msg) {
     std::cerr << msg << std::endl;
   }

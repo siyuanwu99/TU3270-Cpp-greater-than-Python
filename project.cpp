@@ -370,22 +370,40 @@ void heun(const Vector<std::function<T(Vector<T> const&, T)> >& f, Vector<T>& y,
 template <typename T>
 class SimplestWalker {
  private:
-  Vector<T> y_init;
-  T t_init;
+  
+  T t;
   T slope;
 
  public:
+ Vector<T> y;
   //** Constructor **//
   SimplestWalker(const Vector<T>& y0, T t0, T gamma)
-      : y_init(y0), t_init(t0), slope(gamma) {}
+      : y(y0), t(t0), slope(gamma) {}
   //** Derivative **//
-  Vector<T> derivative(const Vector<T>& y) const {
+  Vector<T> derivative(const Vector<T>& y_cur) const {
     Vector<T> dot(4);
-    dot[0] = y[2];
-    dot[1] = y[3];
+    dot[0] = y_cur[2];
+    dot[1] = y_cur[3];
     dot[3] = sin(dot[1] - slope);
-    dot[2] = dot[3] + y[3] * y[3] * sin(y[0]) - cos(y[1] - slope) * sin(y[0]);
+    dot[2] = dot[3] + y_cur[3] * y_cur[3] * sin(y_cur[0]) - cos(y_cur[1] - slope) * sin(y_cur[0]);
     return dot;
+  }
+
+  T dot0(const Vector<T>& y_cur, T t){return derivative(y_cur)[0];}
+  T dot1(const Vector<T>& y_cur, T t){return derivative(y_cur)[1];}
+  T dot2(const Vector<T>& y_cur, T t){return derivative(y_cur)[2];}
+  T dot3(const Vector<T>& y_cur, T t){return derivative(y_cur)[3];}
+
+  const Vector<T>& step(T h){
+    std::function<T(const Vector<T>&, T)> f1 = bind(&SimplestWalker::dot0, this, std::placeholders::_1, std::placeholders::_2);
+    std::function<T(const Vector<T>&, T)> f2 = bind(&SimplestWalker::dot1, this, std::placeholders::_1, std::placeholders::_2);
+    std::function<T(const Vector<T>&, T)> f3 = bind(&SimplestWalker::dot2, this, std::placeholders::_1, std::placeholders::_2);
+    std::function<T(const Vector<T>&, T)> f4 = bind(&SimplestWalker::dot3, this, std::placeholders::_1, std::placeholders::_2);
+    Vector<std::function<T(const Vector<T>&, T)> > f = {f1, f2, f3, f4};
+    
+    std::cout <<"derivative: "<< derivative(y)[0] <<' '<< derivative(y)[1] <<' '<< derivative(y)[2] <<' '<<derivative(y)[3]<<'\n';
+    heun<T>(f, y, h, t);
+    return y;
   }
 };
 
@@ -458,6 +476,18 @@ int main(int argc, char* argv[]) {
     std::cout << y << std::endl;
     std::cout << "Heun rst: " << t << std::endl;
     std::cout << "Heun Success" << std::endl;
+  } catch (const char* msg) {
+    std::cerr << msg << std::endl;
+  }
+
+  /** test for simplest walker **/
+  try {
+    Vector<double> y0({0.4, 0.2, 0, -0.2});
+    SimplestWalker<double> sw(y0, 0, 0.009);
+    for(auto i=0; i<2; i+=0.01){
+      sw.step(0.01);
+      std::cout << sw.y[0] <<' '<<sw.y[1]<<' '<<sw.y[2]<<' '<<sw.y[3]<<'\n';
+    }
   } catch (const char* msg) {
     std::cerr << msg << std::endl;
   }

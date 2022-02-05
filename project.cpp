@@ -59,6 +59,15 @@ class Vector {
     return *this;
   }
 
+  /** operator for assigning every element as same constant **/
+  Vector<T>& operator=(int constant){
+    for(int i=0; i<this->len(); ++i){
+        data[i] = constant;
+    }
+    return *this;
+  }
+
+
   /** move assignment **/
   Vector<T>& operator=(Vector<T>&& other) {
     if (this != &other) {
@@ -154,7 +163,7 @@ typename std::common_type<T, U>::type dot(const Vector<T>& lhs,
     throw "Incompatible dimensions between two vectors!";
   }
 
-  typename std::common_type<T, U>::type sum = 0;
+  typename std::common_type<T, U>::type sum;
   for (auto i = 0; i < lhs.len(); i++) {
     sum += lhs[i] * rhs[i];
   }
@@ -251,11 +260,16 @@ Vector<typename std::common_type<V, U>::type> operator*(const Matrix<V>& lhs,
 template <typename T>
 int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
              T tol = (T)1e-8, int maxiter = 100) {
+  
+  if(A.col() != b.len() || A.col() != x.len()){
+      throw "Incompatible dimensions of vector and matrix!";
+  }
+  
   int length = b.len();
   auto q_0(b - A * x), r_k_1(b - A * x);
   auto x_k_1 = x;
   Vector<T> v_k_1(length), p_k_1(length);
-  v_k_1(length), p_k_1(length) = 0;
+  v_k_1, p_k_1 = 0;
   T alpha, rho_k_1, omega_k_1 = 1;
   T rho_k, beta, omega_k;
   Vector<T> p_k(length), v_k(length), h(length), x_k(length), s(length),
@@ -264,6 +278,7 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
   for (int k = 1; k <= maxiter; ++k) {
     rho_k = dot(q_0, r_k_1);
     beta = (rho_k / rho_k_1) * (alpha / omega_k_1);
+    std::cout << typeid(beta).name() << std::endl;
     p_k = r_k_1 + beta * (p_k_1 - omega_k_1 * v_k_1);
     v_k = A * p_k;
     alpha = rho_k / dot(q_0, v_k);
@@ -400,31 +415,34 @@ class SimplestWalker {
 int main(int argc, char* argv[]) {
   // Your testing of the simplest walker class starts here
   // test Matrix
-  Matrix<double> M(10, 20), M1(10, 3);
+  try{
+  Matrix<float> M(10, 20), M1(10, 3), A(3, 3);
+  Vector<float> x_({20, 50, 0.5}), b({1, 1, 1});
+  A[{0, 0}] = 1;
+  A[{1, 1}] = 1;
+  A[{2, 2}] = 1;
+  auto flag = bicgstab(A, b, x_);
+  std::cout << x_ << std::endl;
+  std::cout << flag << std::endl;
   Vector<double> x({1.0, 1.1, 1.2});
   Vector<int> y({2, 3, 4});
   Vector<float> z({1.0f, 2.0f, 3.0f});
-  Vector<float> z2 = z;
-
-  /** test for move assignment and move constructor */
   std::cout << "z before move: " << z << std::endl;
   // Vector<double> w(std::move(z));
   Vector<float> w;
   w = std::move(z);
   std::cout << "w after move: " << w << std::endl;
   // std::cout << "z after move: " << z << std::endl;
-
-  try {
     // tests for Vector object
     Vector<double> x_plus_y = x - y;
     for (int i = 0; i < x_plus_y.len(); ++i) {
-      std::cout << x_plus_y[i] << ' ';
+        std::cout << x_plus_y[i] << ' ';
     }
     std::cout << '\n';
     std::cout << dot(x_plus_y, x_plus_y) << std::endl;
     x_plus_y = 4 * x_plus_y;
     for (int i = 0; i < x_plus_y.len(); ++i) {
-      std::cout << x_plus_y[i] << ' ';
+        std::cout << x_plus_y[i] << ' ';
     }
     std::cout << '\n';
     std::cout << norm(x_plus_y) << std::endl;
@@ -447,8 +465,9 @@ int main(int argc, char* argv[]) {
     std::cout << 1 << std::endl;
     std::cout << x[2] << std::endl;
     std::cout << M({1, 1}) << std::endl;
-  } catch (const char* msg) {
-    std::cerr << msg << std::endl;
+  }
+  catch(const char* msg){
+      std::cerr << msg << std::endl;
   }
 
   /** test for Heun's integration method **/
@@ -491,19 +510,6 @@ int main(int argc, char* argv[]) {
   // } catch (const char* msg) {
   //   std::cerr << msg << std::endl;
   // }
-
-  /** test for variable type */
-
-  auto z_dot = dot(z2, y);
-  std::cout << "dot between float and int: " << typeid(z_dot).name() << '\t'
-            << z_dot << std::endl;
-  auto y_dot = dot(y, y);
-  std::cout << "dot between int and int: " << typeid(y_dot).name() << '\t'
-            << y_dot << std::endl;
-
-  auto z_norm = norm(z2);
-  std::cout << "norm of float: " << typeid(z_norm).name() << '\t' << z_norm
-            << std::endl;
 
   return 0;
 }

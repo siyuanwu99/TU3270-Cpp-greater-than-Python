@@ -71,6 +71,8 @@ class Vector {
     return *this;
   }
 
+  /** value assignment */
+
   /**iterators**/
   auto begin() const { return this->data.begin(); }
   auto end() const { return this->data.end(); }
@@ -217,6 +219,22 @@ class Matrix {
     return data.at(ij);
   }
 
+  /**
+   * @brief assign value v to all elements in matrix
+   * @param v 
+   * @return T& 
+   */
+  Matrix<T>& operator=(T v) {
+    data.clear();
+    for (int i = 0; i < r; i++) {
+      for (int j = 0; j < c; j++) {
+        auto ij = std::pair<int, int>(i, j);
+        data.insert(std::make_pair(ij, v));
+      }
+    }
+    return *this;
+  }
+
   /** index operator for constant reference **/
   const T& operator()(const std::pair<int, int>& ij) const {
     auto it = data.begin();
@@ -248,6 +266,17 @@ Vector<typename std::common_type<V, U>::type> operator*(const Matrix<V>& lhs,
   return new_vec;
 }
 
+/**
+ * @brief Biconjugate Gradient Stabilized
+ * 
+ * @tparam T 
+ * @param A 
+ * @param b 
+ * @param x 
+ * @param tol 
+ * @param maxiter 
+ * @return int 
+ */
 template <typename T>
 int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
              T tol = (T)1e-8, int maxiter = 100) {
@@ -255,7 +284,7 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
   auto q_0(b - A * x), r_k_1(b - A * x);
   auto x_k_1 = x;
   Vector<T> v_k_1(length), p_k_1(length);
-  v_k_1(length), p_k_1(length) = 0;
+  v_k_1(length), p_k_1(length) = (T)0;
   T alpha, rho_k_1, omega_k_1 = 1;
   T rho_k, beta, omega_k;
   Vector<T> p_k(length), v_k(length), h(length), x_k(length), s(length),
@@ -474,7 +503,7 @@ int main(int argc, char* argv[]) {
     heun(f, y, h, t);
     heun(f, y, h, t);
     std::cout << "Heun rst: ";
-    std::cout << y << std::endl;
+    std::cout << y << '\t' << typeid(y).name() <<std::endl;
     std::cout << "Heun rst: " << t << std::endl;
     std::cout << "Heun Success" << std::endl;
   } catch (const char* msg) {
@@ -492,8 +521,7 @@ int main(int argc, char* argv[]) {
   //   std::cerr << msg << std::endl;
   // }
 
-  /** test for variable type */
-
+  /** test for vector's function variable type */
   auto z_dot = dot(z2, y);
   std::cout << "dot between float and int: " << typeid(z_dot).name() << '\t'
             << z_dot << std::endl;
@@ -504,6 +532,17 @@ int main(int argc, char* argv[]) {
   auto z_norm = norm(z2);
   std::cout << "norm of float: " << typeid(z_norm).name() << '\t' << z_norm
             << std::endl;
+
+  /** test for bicgstab */
+  Matrix<float> A(10, 10);
+  A = 1;
+  Vector<float> b(10);
+  b = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+  Vector<float> s(10);
+
+  int n = bicgstab(A, b, s);
+  std::cout << "Solution: " << x << '\t' << typeid(x).name() << std::endl;
+  std::cout << "Status n: " << n << std::endl;
 
   return 0;
 }

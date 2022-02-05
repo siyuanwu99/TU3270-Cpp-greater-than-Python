@@ -312,21 +312,26 @@ Vector<typename std::common_type<V, U>::type> operator*(const Matrix<V>& lhs,
  */
 template <typename T>
 int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
-             T tol = (T)1e-8, int maxiter = 100) {
+             T tol = (T)1e-8, int maxiter = 500) {
   if (A.col() != b.len() || A.col() != x.len()) {
     throw "Incompatible dimensions of vector and matrix!";
   }
   //TODO: fail safe: make sure A, b, x have initial values!!
 
   int length = b.len();
-  auto q_0(b - A * x), r_k_1(b - A * x);
-  auto x_k_1 = x;
-  Vector<T> v_k_1(length), p_k_1(length);
-  v_k_1, p_k_1 = 0;
+  auto q_0(b - A * x); 
+  auto r_k_1(b - A * x);
+  auto x_k_1(x);
+  Vector<T> v_k_1(length); 
+  Vector<T> p_k_1(length);
+  v_k_1 = 0;
+  p_k_1 = 0;
   T alpha = 1;
   T rho_k_1 = 1; 
   T omega_k_1 = 1;
-  T rho_k, beta, omega_k;
+  T rho_k;
+  T beta;
+  T omega_k;
   Vector<T> p_k(length), v_k(length), h(length), x_k(length), s(length),
       t(length), r_k(length);
 
@@ -338,6 +343,8 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
     alpha = rho_k / dot(q_0, v_k);
     h = x_k_1 + alpha * p_k;
     std::cout << "################################" << std::endl;
+    std::cout << "iteration: " << k << std::endl;
+    std::cout << "rho_k: " << rho_k << std::endl;
     std::cout << "rho_k_1: " << rho_k_1 << std::endl;
     std::cout << "rho_k / rho_k_1: " << rho_k / rho_k_1 << std::endl;
     std::cout << "beta: " << beta << std::endl;
@@ -350,8 +357,6 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
     std::cout << "alpha: " << alpha << std::endl;
     std::cout << "h: " << h << std::endl;
 
-    std::cout << "iteration: " << k << std::endl;
-
     if (norm(b - A * h) < tol) {
       x_k = h;
       x = x_k;
@@ -362,13 +367,13 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
     t = A * s;
     omega_k = dot(t, s) / dot(t, t);
     x_k = h + omega_k * s;
+    x = x_k;
 
     if (norm(b - A * x_k) < tol) {
-      x = x_k;
       return k;
     }
 
-    std::cout << "error: " << norm(b - A * x_k) << std::endl;
+    std::cout << "error: " << norm(b - A * x) << std::endl;
 
     r_k = s - omega_k * t;
 
@@ -486,14 +491,17 @@ int main(int argc, char* argv[]) {
   // Your testing of the simplest walker class starts here
   // test Matrix
   try {
-    Matrix<double> M(10, 20), M1(10, 3), A(3, 3);
-    Vector<double> x_({1,1,1}), b({39, 39, 1});
-    A[{0, 0}] = 1;
+    Matrix<float> M(10, 20), M1(10, 3), A(5, 5);
+    Vector<float> x_({1,1,1,1,1}), b({1, 1, 1, 1, 1});
+    //A[{0, 0}] = 1;
+    A[{0, 1}] = 1;
     A[{1, 1}] = 1;
     A[{2, 2}] = 1;
-    auto flag = bicgstab(A, b, x_);
-    std::cout << x_ << std::endl;
-    std::cout << flag << std::endl;
+    A[{3, 3}] = 1;
+    A[{4, 4}] = 1;
+    //auto flag = bicgstab(A, b, x_);
+    //std::cout << x_ << std::endl;
+    //std::cout << flag << std::endl;
     Vector<double> x({1.0, 1.1, 1.2});
     Vector<int> y({2, 3, 4});
     Vector<float> z({1.0f, 2.0f, 3.0f});
@@ -603,7 +611,7 @@ int main(int argc, char* argv[]) {
   Vector<double> b(10);
   b = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
   Vector<double> s(10);
-  s = 5;
+  s = 0;
   std::cout << "BICGSTAB initial guess s: " << s << std::endl;
 
   int n = bicgstab(A, b, s);

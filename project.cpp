@@ -370,12 +370,12 @@ void heun(const Vector<std::function<T(Vector<T> const&, T)> >& f, Vector<T>& y,
 template <typename T>
 class SimplestWalker {
  private:
-  
+  Vector<T> y;
   T t;
   T slope;
 
  public:
- Vector<T> y;
+ 
   //** Constructor **//
   SimplestWalker(const Vector<T>& y0, T t0, T gamma)
       : y(y0), t(t0), slope(gamma) {}
@@ -484,9 +484,8 @@ int main(int argc, char* argv[]) {
   try {
     Vector<double> y0({0.4, 0.2, 0, -0.2});
     SimplestWalker<double> sw(y0, 0, 0.009);
-    for(auto i=0; i<2; i+=0.01){
+    for(auto i=0; i<0.5; i+=0.01){
       sw.step(0.01);
-      std::cout << sw.y[0] <<' '<<sw.y[1]<<' '<<sw.y[2]<<' '<<sw.y[3]<<'\n';
     }
   } catch (const char* msg) {
     std::cerr << msg << std::endl;

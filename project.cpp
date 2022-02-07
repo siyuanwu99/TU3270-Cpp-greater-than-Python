@@ -582,7 +582,7 @@ int main(int argc, char* argv[]) {
   std::cout << "[matrix] M:" << M << std::endl;
   std::cout << "[matrix] V1: " << V1 << std::endl;
   std::cout << "[matrix] rst: " << R1 << '\t' << typeid(R1[0]).name() << std::endl;
-  
+
   /** test for multiplication between different types **/
   M[{0, 0}] = 1.0;
   M[{1, 1}] = 1.0;
@@ -606,6 +606,7 @@ int main(int argc, char* argv[]) {
   std::cout << "int * Vector<float>: " << (int)5 * z << ' ' << z * (int) 5 << typeid((z * (int) 5)[0]).name() << std::endl;
 
   /** test for bicgstab */
+  Matrix<double> A(10, 10);
   A = 1;
   Vector<double> b(10);
   b = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};

@@ -88,13 +88,13 @@ class Vector {
   /**indexing operators**/
   T& operator[](int i) {
     if (i >= this->len()) {
-      throw "indexing out of scope!";
+      throw "Vector indexing out of scope!";
     }
     return data[i];
   }
   const T& operator[](int i) const {
     if (i >= this->len()) {
-      throw "indexing out of scope!";
+      throw "Vector indexing out of scope!";
     }
     return data[i];
   }
@@ -128,7 +128,7 @@ class Vector {
   }
 
   /** operator* between vector and scalar **/
-  template <typename V>
+  template <typename V, typename=typename std::enable_if<!std::is_class<V>::value, void>::type>
   Vector<typename std::common_type<V, T>::type> operator*(
       const V& scalar) const {
     Vector<typename std::common_type<V, T>::type> nv(this->n);
@@ -539,15 +539,15 @@ class SimplestWalker {
         [this](Vector<double> const& y, double t) { return derivatives[2]; },
         [this](Vector<double> const& y, double t) { return derivatives[3]; },
     };
-    std::cout << "last state: " << y[0] << ' ' << y[1] << ' ' << y[2] << ' '
-              << y[3] << '\n';
-    heun<T>(f, y, h, t);
-    std::cout << "current state: " << y[0] << ' ' << y[1] << ' ' << y[2] << ' '
-              << y[3] << '\n';
-    std::cout << "current derivative: " << derivatives[0] << ' '
-              << derivatives[1] << ' ' << derivatives[2] << ' '
-              << derivatives[3] << '\n'
-              << '\n';
+    // std::cout << "last state: " << y[0] << ' ' << y[1] << ' ' << y[2] << ' '
+    //           << y[3] << '\n';
+    // heun<T>(f, y, h, t);
+    // std::cout << "current state: " << y[0] << ' ' << y[1] << ' ' << y[2] << ' '
+    //           << y[3] << '\n';
+    // std::cout << "current derivative: " << derivatives[0] << ' '
+    //           << derivatives[1] << ' ' << derivatives[2] << ' '
+    //           << derivatives[3] << '\n'
+    //           << '\n';
 
     return y;
   }
@@ -602,6 +602,9 @@ int main(int argc, char* argv[]) {
   Vector<double> x({1.0, 1.1, 1.2});
   Vector<int> y({2, 3, 4});
   Vector<float> z({1.0f, 2.0f, 3.0f});
+
+  // std::cout << "[Vector] template multiplication: " << y * z << std::endl;
+
   auto z_dot = dot(z, y);
   std::cout << "[dot] between float and int: " << typeid(z_dot).name() << '\t'
             << z_dot << std::endl;

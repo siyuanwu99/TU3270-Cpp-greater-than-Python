@@ -493,26 +493,15 @@ class SimplestWalker {
 
   }
 
-  T dot0(const Vector<T>& y_cur, T t) { return derivative(y_cur)[0]; }
-  T dot1(const Vector<T>& y_cur, T t) { return derivative(y_cur)[1]; }
-  T dot2(const Vector<T>& y_cur, T t) { return derivative(y_cur)[2]; }
-  T dot3(const Vector<T>& y_cur, T t) { return derivative(y_cur)[3]; }
+  Vector<T> derivatives;
 
   const Vector<T>& step(T h) {
-    std::function<T(const Vector<T>&, T)> f1 =
-        bind(&SimplestWalker::dot0, this, std::placeholders::_1,
-             std::placeholders::_2);
-    std::function<T(const Vector<T>&, T)> f2 =
-        bind(&SimplestWalker::dot1, this, std::placeholders::_1,
-             std::placeholders::_2);
-    std::function<T(const Vector<T>&, T)> f3 =
-        bind(&SimplestWalker::dot2, this, std::placeholders::_1,
-             std::placeholders::_2);
-    std::function<T(const Vector<T>&, T)> f4 =
-        bind(&SimplestWalker::dot3, this, std::placeholders::_1,
-             std::placeholders::_2);
-    Vector<std::function<T(const Vector<T>&, T)>> f = {f1, f2, f3, f4};
-
+    Vector<std::function<T(const Vector<T>&, T)>> f = {
+        [](Vector<double> const& y, double t) { return y[2]; },
+        [](Vector<double> const& y, double t) { return y[3]; },
+        [this](Vector<double> const& y, double t) { this->derivatives = this->derivative(y); return derivatives[2]; },
+        [this](Vector<double> const& y, double t) { return this->derivatives[3]; },
+    };
     std::cout << "derivative: " << derivative(y)[0] << ' ' << derivative(y)[1]
               << ' ' << derivative(y)[2] << ' ' << derivative(y)[3] << '\n';
     heun<T>(f, y, h, t);

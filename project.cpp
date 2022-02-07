@@ -20,8 +20,8 @@ class Vector {
 
  public:
   /** constructor and destructor **/
-  explicit Vector() : n(0), data(nullptr) {}
-  explicit Vector(int a) : n(a), data(new T[a]) {}
+  Vector() : n(0), data(nullptr) {}
+  Vector(int a) : n(a), data(new T[a]) {}
   Vector(const std::initializer_list<T>& list) : Vector((int)list.size()) {
     std::uninitialized_copy(list.begin(), list.end(), data);
   }
@@ -305,6 +305,7 @@ Vector<typename std::common_type<V, U>::type> operator*(const Matrix<V>& lhs,
     throw "Incompatible dimensions of the vector and the matrix!";
   }
   Vector<typename std::common_type<V, U>::type> new_vec(lhs.row());
+  new_vec = 0;
   for (auto it = lhs.cbegin(); it != lhs.cend(); ++it) {
     int i = it->first.first;
     int j = it->first.second;
@@ -507,60 +508,11 @@ class SimplestWalker {
 
 int main(int argc, char* argv[]) {
   // Your testing of the simplest walker class starts here
-  // test Matrix
+  // test Matrix and Vector
   try {
     Matrix<double> M(10, 20), M1(10, 3), A(5, 5);
     Vector<double> x_({1,1,1,1,1}), b({1, 1, 1, 1, 1});
-    A[{0, 0}] = 1;
-    A[{1, 1}] = 1;
-    A[{2, 2}] = 1;
-    A[{3, 3}] = 1;
-    A[{4, 4}] = 1;
-    auto flag = bicgstab(A, b, x_);
-    std::cout << x_ << std::endl;
-    std::cout << flag << std::endl;
-    Vector<double> x({1.0, 1.1, 1.2});
-    Vector<int> y({2, 3, 4});
-    Vector<float> z({1.0f, 2.0f, 3.0f});
-    std::cout << "z before move: " << z << std::endl;
-    // Vector<double> w(std::move(z));
-    Vector<float> w;
-    w = std::move(z);
-    std::cout << "w after move: " << w << std::endl;
-    // std::cout << "z after move: " << z << std::endl;
 
-    // tests for Vector object
-    Vector<double> x_plus_y = x - y;
-    for (int i = 0; i < x_plus_y.len(); ++i) {
-      std::cout << x_plus_y[i] << ' ';
-    }
-    std::cout << '\n';
-    std::cout << dot(x_plus_y, x_plus_y) << std::endl;
-    x_plus_y = 4 * x_plus_y;
-    for (int i = 0; i < x_plus_y.len(); ++i) {
-      std::cout << x_plus_y[i] << ' ';
-    }
-    std::cout << '\n';
-    std::cout << norm(x_plus_y) << std::endl;
-    // for(auto iter = x_plus_y.begin(); iter != x_plus_y.end(); ++iter){
-    //     std::cout << *iter << ' ';
-    // }
-
-    // tests for Matrix object
-    M[{1, 9}] = 1.0;  // set value at row 0, column 0 to 1.0
-    // for(auto iter = M.cbegin(); iter != M.cend(); ++iter){
-    //     std::cout << *iter;
-    // }
-
-    std::cout << M[{1, 9}] << std::endl;
-    std::cout << M[{0, 0}] << std::endl;
-    std::cout << M({1, 9}) << std::endl;
-    std::cout << typeid(M.row()).name() << ' ' << M.col() << std::endl;
-    Vector<double> v2 = x;
-    v2 = M1 * x;
-    std::cout << 1 << std::endl;
-    std::cout << x[2] << std::endl;
-    std::cout << M({1, 1}) << std::endl;
   } catch (const char* msg) {
     std::cerr << msg << std::endl;
   }
@@ -621,6 +573,24 @@ int main(int argc, char* argv[]) {
   auto z_norm = norm(z);
   std::cout << "[norm] of float: " << typeid(z_norm).name() << '\t' << z_norm
             << std::endl;
+  /** test for multiplication between different types **/
+  Matrix<float> M(3, 3);
+  M[{0, 0}] = 1.0;
+  M[{1, 1}] = 1.0;
+  M[{2, 2}] = 1.0;
+  Matrix<int> N(3, 3);
+  N[{0, 0}] = 5;
+  N[{1, 1}] = 5;
+  N[{2, 2}] = 5;
+  Matrix<double> O(3, 3);
+  O[{0, 0}] = 1;
+  O[{1, 1}] = 1;
+  O[{2, 2}] = 1;
+  std::cout << "Matrix<int> * Vector<double>" << '\n' << N*x << std::endl;  
+  std::cout << "Matrix<double> * Vector<float>" << '\n' << O*z << std::endl;
+  std::cout << "Matrix<float> * Vector<double>" << '\n' << M*x << std::endl;
+
+
 
   /** test for bicgstab */
   Matrix<double> A(10, 10);

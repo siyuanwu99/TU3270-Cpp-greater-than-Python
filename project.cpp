@@ -362,20 +362,20 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
       alpha = 0;
     }
     h = x_k_1 + alpha * p_k;
-    std::cout << "################################" << std::endl;
-    std::cout << "iteration: " << k << std::endl;
-    std::cout << "rho_k: " << rho_k << std::endl;
-    std::cout << "rho_k_1: " << rho_k_1 << std::endl;
-    std::cout << "rho_k / rho_k_1: " << rho_k / rho_k_1 << std::endl;
-    std::cout << "beta: " << beta << std::endl;
-    std::cout << "r_k_1" << r_k_1 << std::endl;
-    std::cout << "p_k" << p_k << std::endl;
-    std::cout << "vk" << v_k << std::endl;
-    std::cout << "q0: " << q_0 <<std::endl;
-    std::cout << "dot(q_0, v_k): " << dot(q_0, v_k) << std::endl;
-    std::cout << "x_k_1: " << x_k_1 << std::endl;
-    std::cout << "alpha: " << alpha << std::endl;
-    std::cout << "h: " << h << std::endl;
+    // std::cout << "################################" << std::endl;
+    // std::cout << "iteration: " << k << std::endl;
+    // std::cout << "rho_k: " << rho_k << std::endl;
+    // std::cout << "rho_k_1: " << rho_k_1 << std::endl;
+    // std::cout << "rho_k / rho_k_1: " << rho_k / rho_k_1 << std::endl;
+    // std::cout << "beta: " << beta << std::endl;
+    // std::cout << "r_k_1" << r_k_1 << std::endl;
+    // std::cout << "p_k" << p_k << std::endl;
+    // std::cout << "vk" << v_k << std::endl;
+    // std::cout << "q0: " << q_0 <<std::endl;
+    // std::cout << "dot(q_0, v_k): " << dot(q_0, v_k) << std::endl;
+    // std::cout << "x_k_1: " << x_k_1 << std::endl;
+    // std::cout << "alpha: " << alpha << std::endl;
+    // std::cout << "h: " << h << std::endl;
 
     if (norm(b - A * h) < tol) {
       x_k = h;
@@ -393,7 +393,7 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
       return k;
     }
 
-    std::cout << "error: " << norm(b - A * x) << std::endl;
+    // std::cout << "error: " << norm(b - A * x) << std::endl;
 
     r_k = s - omega_k * t;
 
@@ -471,38 +471,46 @@ class SimplestWalker {
       : y(y0), t(t0), slope(gamma) {}
   //** Derivative **//
   Vector<T> derivative(const Vector<T>& y_cur) const {
-    Vector<T> dot(4);
-    dot[0] = y_cur[2];
-    dot[1] = y_cur[3];
-    dot[3] = sin(dot[1] - slope);
-    dot[2] = dot[3] + y_cur[3] * y_cur[3] * sin(y_cur[0]) -
-             cos(y_cur[1] - slope) * sin(y_cur[0]);
-    return dot;
+    Vector<T> x({1,1,1,1}), b(4);
+    b[0] = y_cur[2];
+    b[1] = y_cur[3];
+    b[2] = sin(y_cur[1] - slope);
+    b[3] = - y_cur[3] * y_cur[3] * sin(y_cur[0]) + cos(y_cur[1] - slope) * sin(y_cur[0]);
+    Matrix<T> A(4,4);
+    A[{0,0}] = 1.0;
+    A[{1,1}] = 1.0;
+    A[{2,3}] = 1.0;
+    A[{3,3}] = 1.0;
+    A[{3,2}] = -1.0;
+
+    if(bicgstab(A, b, x)<0) {
+      std::cout<<"no solution founded, remain current state";
+      x[0] = 0;
+      x[1] = 0;
+      x[2] = 0;
+      x[3] = 0;
+    }
+    return x;
+
   }
 
-  T dot0(const Vector<T>& y_cur, T t) { return derivative(y_cur)[0]; }
-  T dot1(const Vector<T>& y_cur, T t) { return derivative(y_cur)[1]; }
-  T dot2(const Vector<T>& y_cur, T t) { return derivative(y_cur)[2]; }
-  T dot3(const Vector<T>& y_cur, T t) { return derivative(y_cur)[3]; }
+  Vector<T> derivatives;
 
   const Vector<T>& step(T h) {
-    std::function<T(const Vector<T>&, T)> f1 =
-        bind(&SimplestWalker::dot0, this, std::placeholders::_1,
-             std::placeholders::_2);
-    std::function<T(const Vector<T>&, T)> f2 =
-        bind(&SimplestWalker::dot1, this, std::placeholders::_1,
-             std::placeholders::_2);
-    std::function<T(const Vector<T>&, T)> f3 =
-        bind(&SimplestWalker::dot2, this, std::placeholders::_1,
-             std::placeholders::_2);
-    std::function<T(const Vector<T>&, T)> f4 =
-        bind(&SimplestWalker::dot3, this, std::placeholders::_1,
-             std::placeholders::_2);
-    Vector<std::function<T(const Vector<T>&, T)>> f = {f1, f2, f3, f4};
-
-    std::cout << "derivative: " << derivative(y)[0] << ' ' << derivative(y)[1]
-              << ' ' << derivative(y)[2] << ' ' << derivative(y)[3] << '\n';
+    Vector<std::function<T(const Vector<T>&, T)>> f = {
+        [this](Vector<double> const& y, double t) { this->derivatives = this->derivative(y); return derivatives[0]; },
+        [this](Vector<double> const& y, double t) { return derivatives[1]; },
+        [this](Vector<double> const& y, double t) { return derivatives[2]; },
+        [this](Vector<double> const& y, double t) { return derivatives[3]; },
+    };
+    std::cout << "last state: " << y[0] << ' ' << y[1]
+              << ' ' << y[2] << ' ' << y[3] << '\n';
     heun<T>(f, y, h, t);
+    std::cout << "current state: " << y[0] << ' ' << y[1]
+              << ' ' << y[2] << ' ' << y[3] << '\n';
+    std::cout << "current derivative: " << derivatives[0] << ' ' << derivatives[1]
+              << ' ' << derivatives[2] << ' ' << derivatives[3] << '\n'<<'\n';
+
     return y;
   }
 };
@@ -542,15 +550,15 @@ int main(int argc, char* argv[]) {
   }
 
   /** test for simplest walker **/
-  // try {
-  //   Vector<double> y0({0.4, 0.2, 0, -0.2});
-  //   SimplestWalker<double> sw(y0, 0, 0.009);
-  //   for (auto i = 0; i < 20; i++) {
-  //     sw.step(0.01);
-  //   }
-  // } catch (const char* msg) {
-  //   std::cerr << msg << std::endl;
-  // }
+  try {
+    Vector<double> y0({0.4, 0.2, 0, -0.2});
+    SimplestWalker<double> sw(y0, 0, 0.009);
+    for (auto i = 0; i < 2000; i++) {
+      sw.step(0.01);
+    }
+  } catch (const char* msg) {
+    std::cerr << msg << std::endl;
+  }
 
   /** test for vector's function variable type */
   Vector<double> x({1.0, 1.1, 1.2});
@@ -566,8 +574,17 @@ int main(int argc, char* argv[]) {
   auto z_norm = norm(z);
   std::cout << "[norm] of float: " << typeid(z_norm).name() << '\t' << z_norm
             << std::endl;
+  /** test for Matrix function and variable type */
+  Matrix<float> M(4, 4);
+  M = 1;
+  Vector<double> V1(4);
+  V1 = {2, 1, 2, 1};
+  auto R1 = M * V1;
+  std::cout << "[matrix] M:" << M << std::endl;
+  std::cout << "[matrix] V1: " << V1 << std::endl;
+  std::cout << "[matrix] rst: " << R1 << '\t' << typeid(R1[0]).name() << std::endl;
+
   /** test for multiplication between different types **/
-  Matrix<float> M(3, 3);
   M[{0, 0}] = 1.0;
   M[{1, 1}] = 1.0;
   M[{2, 2}] = 1.0;

@@ -328,7 +328,7 @@ Vector<typename std::common_type<V, U>::type> operator*(const Matrix<V>& lhs,
  */
 template <typename T>
 int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
-             T tol = (T)1e-8, int maxiter = 500) {
+             T tol = (T)1e-8, int maxiter = 100) {
   if (A.col() != b.len() || A.col() != x.len()) {
     throw "Incompatible dimensions of vector and matrix!";
   }
@@ -394,7 +394,7 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
       return k;
     }
 
-    // std::cout << "error: " << norm(b - A * x) << std::endl;
+    //std::cout << "error: " << norm(b - A * x) << std::endl;
 
     r_k = s - omega_k * t;
 
@@ -406,6 +406,7 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
     v_k_1 = v_k;
     x_k_1 = x_k;
   }
+  std::cout << "probably the `tol` is too low, try to increase the `tol` to get a valid solution." << std::endl;
   return -1;
 }
 

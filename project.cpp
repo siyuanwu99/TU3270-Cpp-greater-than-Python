@@ -508,14 +508,6 @@ class SimplestWalker {
 
 int main(int argc, char* argv[]) {
   // Your testing of the simplest walker class starts here
-  // test Matrix and Vector
-  try {
-    Matrix<double> M(10, 20), M1(10, 3), A(5, 5);
-    Vector<double> x_({1,1,1,1,1}), b({1, 1, 1, 1, 1});
-
-  } catch (const char* msg) {
-    std::cerr << msg << std::endl;
-  }
 
   /** test for Heun's integration method **/
   try {
@@ -591,7 +583,10 @@ int main(int argc, char* argv[]) {
   std::cout << "Matrix<float> * Vector<double>" << '\n' << M*x << std::endl;
   std::cout << "Matrix<double> * Vector<double>" << '\n' << O*x << std::endl;
 
-
+  /** test for scalar * vector between different types **/
+  std::cout << "int * Vector<double>: " << (int)5 * x << ' ' << x * (int) 5 << typeid((x * (int) 5)[0]).name() << std::endl;
+  std::cout << "float * Vector<double>: " << (float)5.0f * x << ' ' << x * (float) 5.0f << typeid((x * (float) 5.0f)[0]).name() << std::endl;
+  std::cout << "int * Vector<float>: " << (int)5 * z << ' ' << z * (int) 5 << typeid((z * (int) 5)[0]).name() << std::endl;
 
   /** test for bicgstab */
   Matrix<double> A(10, 10);

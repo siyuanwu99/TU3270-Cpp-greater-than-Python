@@ -86,8 +86,16 @@ class Vector {
   auto cend() const { return this->data.cend(); }
 
   /**indexing operators**/
-  T& operator[](int i) { return data[i]; }
-  const T& operator[](int i) const { return data[i]; }
+  T& operator[](int i) { 
+    if(i >= this->len()){
+        throw "indexing out of scope!";
+    }
+    return data[i]; }
+  const T& operator[](int i) const { 
+    if(i >= this->len()){
+        throw "indexing out of scope!";
+    }
+    return data[i]; }
 
   /** operator +*/
   template <typename T2>
@@ -260,6 +268,9 @@ class Matrix {
 
   /** index operator for constant reference **/
   const T& operator()(const std::pair<int, int>& ij) const {
+    if(ij.first >= this->row() || ij.second >= this->col()){
+        throw "indexing out of scope!";
+    }
     auto it = data.begin();
     for (; it != data.end(); ++it) {
       int i = it->first.first;

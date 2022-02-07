@@ -583,12 +583,13 @@ int main(int argc, char* argv[]) {
   N[{1, 1}] = 5;
   N[{2, 2}] = 5;
   Matrix<double> O(3, 3);
-  O[{0, 0}] = 1;
+  O[{1, 0}] = 1;
   O[{1, 1}] = 1;
   O[{2, 2}] = 1;
   std::cout << "Matrix<int> * Vector<double>" << '\n' << N*x << std::endl;  
   std::cout << "Matrix<double> * Vector<float>" << '\n' << O*z << std::endl;
   std::cout << "Matrix<float> * Vector<double>" << '\n' << M*x << std::endl;
+  std::cout << "Matrix<double> * Vector<double>" << '\n' << O*x << std::endl;
 
 
 

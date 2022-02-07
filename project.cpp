@@ -607,6 +607,16 @@ int main(int argc, char* argv[]) {
   auto z_norm = norm(z);
   std::cout << "[norm] of float: " << typeid(z_norm).name() << '\t' << z_norm
             << std::endl;
+  
+  /** test for Matrix function and variable type */
+  Matrix<float> M(4, 4);
+  M = 1;
+  Vector<double> V1(4);
+  V1 = {2, 1, 2, 1};
+  auto R1 = M * V1;
+  std::cout << "[matrix] M:" << M << std::endl;
+  std::cout << "[matrix] V1: " << V1 << std::endl;
+  std::cout << "[matrix] rst: " << R1 << '\t' << typeid(R1[0]).name() << std::endl;
 
   /** test for bicgstab */
   Matrix<double> A(10, 10);

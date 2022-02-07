@@ -86,16 +86,18 @@ class Vector {
   auto cend() const { return this->data.cend(); }
 
   /**indexing operators**/
-  T& operator[](int i) { 
-    if(i >= this->len()){
-        throw "indexing out of scope!";
+  T& operator[](int i) {
+    if (i >= this->len()) {
+      throw "indexing out of scope!";
     }
-    return data[i]; }
-  const T& operator[](int i) const { 
-    if(i >= this->len()){
-        throw "indexing out of scope!";
+    return data[i];
+  }
+  const T& operator[](int i) const {
+    if (i >= this->len()) {
+      throw "indexing out of scope!";
     }
-    return data[i]; }
+    return data[i];
+  }
 
   /** operator +*/
   template <typename T2>
@@ -136,9 +138,15 @@ class Vector {
     return nv;
   }
   /** operator * between scalar and vector **/
-  template <typename V, typename U>
-  friend Vector<typename std::common_type<V, U>::type> operator*(
-      const V& scalar, const Vector<U>& vec);
+  // template <typename V,
+  //     typename = typename std::enable_if<!std::is_class<V>::value,
+  //     void>::type, typename U>
+  // template <typename V, typename U>
+  // friend Vector<typename std::common_type<V, U>::type> operator*(
+  //     const V& scalar, const Vector<U>& vec);
+  //  {
+  //   return vec * scalar;
+  // }
 
   /** length function for retrieving the length of the vector **/
   int len(void) const { return this->n; }
@@ -156,7 +164,19 @@ std::ostream& operator<<(std::ostream& out, const Vector<V>& v) {
 }
 
 /** operator* between a scalar and a vector （invoke the internal method） **/
-template <typename V, typename U>
+// template <
+//     typename V,
+//     typename = typename std::enable_if<!std::is_class<V>::value, void>::type,
+//     typename U>
+// Vector<typename std::common_type<V, U>::type> operator*(const V& scalar,
+//                                                         const Vector<U>& vec)
+//                                                         {
+//   return vec * scalar;
+// }
+template <
+    typename V,
+    typename = typename std::enable_if<!std::is_class<V>::value, void>::type,
+    typename U>
 Vector<typename std::common_type<V, U>::type> operator*(const V& scalar,
                                                         const Vector<U>& vec) {
   return vec * scalar;
@@ -165,11 +185,11 @@ Vector<typename std::common_type<V, U>::type> operator*(const V& scalar,
 /**
  * @brief dot
  * function for computing the inner product of two vectors
- * @tparam T 
- * @tparam U 
- * @param lhs 
- * @param rhs 
- * @return std::common_type<T, U>::type 
+ * @tparam T
+ * @tparam U
+ * @param lhs
+ * @param rhs
+ * @return std::common_type<T, U>::type
  */
 template <typename T, typename U>
 typename std::common_type<T, U>::type dot(const Vector<T>& lhs,
@@ -188,9 +208,9 @@ typename std::common_type<T, U>::type dot(const Vector<T>& lhs,
 /**
  * @brief norm
  * norm function returning the l2 norm of the vector
- * @tparam T 
- * @param vec 
- * @return T 
+ * @tparam T
+ * @param vec
+ * @return T
  */
 template <typename T>
 T norm(const Vector<T>& vec) {
@@ -215,6 +235,10 @@ class Matrix {
   /** constructor **/
   Matrix(int rows, int cols) : r(rows), c(cols){};
 
+  Matrix(const Matrix<T>& other) : r(other.r), c(other.c) {
+    data = other.data;
+  }
+
   /** destructor **/
   ~Matrix() {
     r = 0;
@@ -234,8 +258,8 @@ class Matrix {
 
   /** index operator **/
   T& operator[](const std::pair<int, int>& ij) {
-    if(ij.first >= this->row() || ij.second >= this->col()){
-        throw "indexing out of scope!";
+    if (ij.first >= this->row() || ij.second >= this->col()) {
+      throw "indexing out of scope!";
     }
     auto it = data.begin();
     for (; it != data.end(); ++it) {
@@ -257,9 +281,15 @@ class Matrix {
    */
   Matrix<T>& operator=(T v) {
     data.clear();
-    for (int i = 0; i < r; i++) {
-      for (int j = 0; j < c; j++) {
-        auto ij = std::pair<int, int>(i, j);
+    if (r == c) {
+      for (int i = 0; i < r; i++) {
+        auto ij = std::pair<int, int>(i, i);
+        data.insert(std::make_pair(ij, v));
+      }
+    } else {
+      int s = (r > c) ? c : r;
+      for (int i = 0; i < s; i++) {
+        auto ij = std::pair<int, int>(i, i);
         data.insert(std::make_pair(ij, v));
       }
     }
@@ -268,8 +298,8 @@ class Matrix {
 
   /** index operator for constant reference **/
   const T& operator()(const std::pair<int, int>& ij) const {
-    if(ij.first >= this->row() || ij.second >= this->col()){
-        throw "indexing out of scope!";
+    if (ij.first >= this->row() || ij.second >= this->col()) {
+      throw "indexing out of scope!";
     }
     auto it = data.begin();
     for (; it != data.end(); ++it) {
@@ -286,11 +316,12 @@ class Matrix {
 /** Matrix: overload operator << for pretty output **/
 template <typename V>
 std::ostream& operator<<(std::ostream& out, const Matrix<V>& m) {
+  Matrix<V> m_(m);  // copy matrix
   out << "\n";
   for (int i = 0; i < m.row(); i++) {
     out << "| ";
     for (int j = 0; j < m.col(); j++) {
-      out << m({i, j}) << " ";
+        out << m_[{i, j}] << " ";
     }
     out << "|\n";
   }
@@ -331,18 +362,18 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
   if (A.col() != b.len() || A.col() != x.len()) {
     throw "Incompatible dimensions of vector and matrix!";
   }
-  //TODO: fail safe: make sure A, b, x have initial values!!
+  // TODO: fail safe: make sure A, b, x have initial values!!
 
   int length = b.len();
-  auto q_0(b - A * x); 
+  auto q_0(b - A * x);
   auto r_k_1(b - A * x);
   auto x_k_1(x);
-  Vector<T> v_k_1(length); 
+  Vector<T> v_k_1(length);
   Vector<T> p_k_1(length);
   v_k_1 = 0;
   p_k_1 = 0;
   T alpha = 1;
-  T rho_k_1 = 1; 
+  T rho_k_1 = 1;
   T omega_k_1 = 1;
   T rho_k;
   T beta;
@@ -355,9 +386,9 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
     beta = (rho_k / rho_k_1) * (alpha / omega_k_1);
     p_k = r_k_1 + beta * (p_k_1 - omega_k_1 * v_k_1);
     v_k = A * p_k;
-    if(dot(q_0, v_k) != 0){
-      alpha = rho_k / dot(q_0, v_k);}
-    else{
+    if (dot(q_0, v_k) != 0) {
+      alpha = rho_k / dot(q_0, v_k);
+    } else {
       alpha = 0;
     }
     h = x_k_1 + alpha * p_k;
@@ -470,45 +501,50 @@ class SimplestWalker {
       : y(y0), t(t0), slope(gamma) {}
   //** Derivative **//
   Vector<T> derivative(const Vector<T>& y_cur) const {
-    Vector<T> x({1,1,1,1}), b(4);
+    Vector<T> x({1, 1, 1, 1}), b(4);
     b[0] = y_cur[2];
     b[1] = y_cur[3];
     b[2] = sin(y_cur[1] - slope);
-    b[3] = - y_cur[3] * y_cur[3] * sin(y_cur[0]) + cos(y_cur[1] - slope) * sin(y_cur[0]);
-    Matrix<T> A(4,4);
-    A[{0,0}] = 1.0;
-    A[{1,1}] = 1.0;
-    A[{2,3}] = 1.0;
-    A[{3,3}] = 1.0;
-    A[{3,2}] = -1.0;
+    b[3] = -y_cur[3] * y_cur[3] * sin(y_cur[0]) +
+           cos(y_cur[1] - slope) * sin(y_cur[0]);
+    Matrix<T> A(4, 4);
+    A[{0, 0}] = 1.0;
+    A[{1, 1}] = 1.0;
+    A[{2, 3}] = 1.0;
+    A[{3, 3}] = 1.0;
+    A[{3, 2}] = -1.0;
 
-    if(bicgstab(A, b, x)<0) {
-      std::cout<<"no solution founded, remain current state";
+    if (bicgstab(A, b, x) < 0) {
+      std::cout << "no solution founded, remain current state";
       x[0] = 0;
       x[1] = 0;
       x[2] = 0;
       x[3] = 0;
     }
     return x;
-
   }
 
   Vector<T> derivatives;
 
   const Vector<T>& step(T h) {
     Vector<std::function<T(const Vector<T>&, T)>> f = {
-        [this](Vector<double> const& y, double t) { this->derivatives = this->derivative(y); return derivatives[0]; },
+        [this](Vector<double> const& y, double t) {
+          this->derivatives = this->derivative(y);
+          return derivatives[0];
+        },
         [this](Vector<double> const& y, double t) { return derivatives[1]; },
         [this](Vector<double> const& y, double t) { return derivatives[2]; },
         [this](Vector<double> const& y, double t) { return derivatives[3]; },
     };
-    std::cout << "last state: " << y[0] << ' ' << y[1]
-              << ' ' << y[2] << ' ' << y[3] << '\n';
+    std::cout << "last state: " << y[0] << ' ' << y[1] << ' ' << y[2] << ' '
+              << y[3] << '\n';
     heun<T>(f, y, h, t);
-    std::cout << "current state: " << y[0] << ' ' << y[1]
-              << ' ' << y[2] << ' ' << y[3] << '\n';
-    std::cout << "current derivative: " << derivatives[0] << ' ' << derivatives[1]
-              << ' ' << derivatives[2] << ' ' << derivatives[3] << '\n'<<'\n';
+    std::cout << "current state: " << y[0] << ' ' << y[1] << ' ' << y[2] << ' '
+              << y[3] << '\n';
+    std::cout << "current derivative: " << derivatives[0] << ' '
+              << derivatives[1] << ' ' << derivatives[2] << ' '
+              << derivatives[3] << '\n'
+              << '\n';
 
     return y;
   }
@@ -574,16 +610,18 @@ int main(int argc, char* argv[]) {
   std::cout << "[norm] of float: " << typeid(z_norm).name() << '\t' << z_norm
             << std::endl;
   /** test for Matrix function and variable type */
-  Matrix<float> M(4, 4);
-  M = 1;
+  Matrix<float> M1(4, 4);
+  M1 = 1.f;
   Vector<double> V1(4);
   V1 = {2, 1, 2, 1};
-  auto R1 = M * V1;
-  std::cout << "[matrix] M:" << M << std::endl;
+  auto R1 = M1 * V1;
+  std::cout << "[matrix] M:" << M1 << std::endl;
   std::cout << "[matrix] V1: " << V1 << std::endl;
-  std::cout << "[matrix] rst: " << R1 << '\t' << typeid(R1[0]).name() << std::endl;
+  std::cout << "[matrix] rst: " << R1 << '\t' << typeid(R1[0]).name()
+            << std::endl;
 
   /** test for multiplication between different types **/
+  Matrix<float> M(3, 3);
   M[{0, 0}] = 1.0;
   M[{1, 1}] = 1.0;
   M[{2, 2}] = 1.0;
@@ -595,15 +633,19 @@ int main(int argc, char* argv[]) {
   O[{1, 0}] = 1;
   O[{1, 1}] = 1;
   O[{2, 2}] = 1;
-  std::cout << "Matrix<int> * Vector<double>" << '\n' << N*x << std::endl;  
-  std::cout << "Matrix<double> * Vector<float>" << '\n' << O*z << std::endl;
-  std::cout << "Matrix<float> * Vector<double>" << '\n' << M*x << std::endl;
-  std::cout << "Matrix<double> * Vector<double>" << '\n' << O*x << std::endl;
+  std::cout << "Matrix<int> * Vector<double>" << '\n' << N * x << std::endl;
+  std::cout << "Matrix<double> * Vector<float>" << '\n' << O * z << std::endl;
+  std::cout << "Matrix<float> * Vector<double>" << '\n' << M * x << std::endl;
+  std::cout << "Matrix<double> * Vector<double>" << '\n' << O * x << std::endl;
 
   /** test for scalar * vector between different types **/
-  std::cout << "int * Vector<double>: " << (int)5 * x << ' ' << x * (int) 5 << typeid((x * (int) 5)[0]).name() << std::endl;
-  std::cout << "float * Vector<double>: " << (float)5.0f * x << ' ' << x * (float) 5.0f << typeid((x * (float) 5.0f)[0]).name() << std::endl;
-  std::cout << "int * Vector<float>: " << (int)5 * z << ' ' << z * (int) 5 << typeid((z * (int) 5)[0]).name() << std::endl;
+  std::cout << "int * Vector<double>: " << (int)5 * x << ' ' << x * (int)5
+            << typeid((x * (int)5)[0]).name() << std::endl;
+  std::cout << "float * Vector<double>: " << (float)5.0f * x << ' '
+            << x * (float)5.0f << typeid((x * (float)5.0f)[0]).name()
+            << std::endl;
+  std::cout << "int * Vector<float>: " << (int)5 * z << ' ' << z * (int)5
+            << typeid((z * (int)5)[0]).name() << std::endl;
 
   /** test for bicgstab */
   Matrix<double> A(10, 10);
@@ -617,11 +659,13 @@ int main(int argc, char* argv[]) {
   int n = bicgstab(A, b, s);
   std::cout << "BICGSTAB Matrix A: " << A << std::endl;
   std::cout << "BICGSTAB Vector b: " << b << std::endl;
-  std::cout << "BICGSTAB Solution: " << s << '\t' << typeid(s[0]).name() << std::endl;
+  std::cout << "BICGSTAB Solution: " << s << '\t' << typeid(s[0]).name()
+            << std::endl;
   std::cout << "BICGSTAB Status n: " << n << std::endl;
   /**
    * @brief Expected value from matlab
-   * -0.4727   -0.2455   -0.0182    0.2091    0.4364    0.6636    0.8909    1.1182    1.3455    1.5727
+   * -0.4727   -0.2455   -0.0182    0.2091    0.4364    0.6636 0.8909    1.1182
+   * 1.3455    1.5727
    */
   return 0;
 }

@@ -313,6 +313,7 @@ class Matrix {
     throw "The queried entry does not exist!";
   }
 };
+
 /** Matrix: overload operator << for pretty output **/
 template <typename V>
 std::ostream& operator<<(std::ostream& out, const Matrix<V>& m) {
@@ -358,7 +359,7 @@ Vector<typename std::common_type<V, U>::type> operator*(const Matrix<V>& lhs,
  */
 template <typename T>
 int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
-             T tol = (T)1e-8, int maxiter = 500) {
+             T tol = (T)1e-8, int maxiter = 100) {
   if (A.col() != b.len() || A.col() != x.len()) {
     throw "Incompatible dimensions of vector and matrix!";
   }
@@ -380,17 +381,18 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
   T omega_k;
   Vector<T> p_k(length), v_k(length), h(length), x_k(length), s(length),
       t(length), r_k(length);
+  
+  //check if the current solution is already correct
+  if(norm(b - A * x) < tol){
+      return 0;
+  }
 
   for (int k = 1; k <= maxiter; ++k) {
     rho_k = dot(q_0, r_k_1);
     beta = (rho_k / rho_k_1) * (alpha / omega_k_1);
     p_k = r_k_1 + beta * (p_k_1 - omega_k_1 * v_k_1);
     v_k = A * p_k;
-    if (dot(q_0, v_k) != 0) {
-      alpha = rho_k / dot(q_0, v_k);
-    } else {
-      alpha = 0;
-    }
+    alpha = rho_k / dot(q_0, v_k);
     h = x_k_1 + alpha * p_k;
     // std::cout << "################################" << std::endl;
     // std::cout << "iteration: " << k << std::endl;
@@ -423,7 +425,7 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
       return k;
     }
 
-    // std::cout << "error: " << norm(b - A * x) << std::endl;
+    //std::cout << "error: " << norm(b - A * x) << std::endl;
 
     r_k = s - omega_k * t;
 
@@ -435,6 +437,7 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
     v_k_1 = v_k;
     x_k_1 = x_k;
   }
+  std::cout << "probably the `tol` is too low, try to increase the `tol` to get a valid solution." << std::endl;
   return -1;
 }
 
@@ -648,11 +651,35 @@ int main(int argc, char* argv[]) {
             << typeid((z * (int)5)[0]).name() << std::endl;
 
   /** test for bicgstab */
-  Matrix<double> A(10, 10);
-  A = 1;
-  Vector<double> b(10);
-  b = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-  Vector<double> s(10);
+  Matrix<double> A(5, 5);
+  A[{0, 0}] = 0.907200000000000;
+  A[{0, 1}] = 0.604800000000000;
+  A[{0, 2}] = 0.453600000000000;
+  A[{0, 3}] = 0.362880000000000;
+  A[{0, 4}] = 0.302400000000000;
+  A[{1, 0}] = 0.604800000000000;
+  A[{1, 1}] = 0.453600000000000;
+  A[{1, 2}] = 0.362880000000000;
+  A[{1, 3}] = 0.302400000000000;
+  A[{1, 4}] = 0.259200000000000;
+  A[{2, 0}] = 0.453600000000000;
+  A[{2, 1}] = 0.362880000000000;
+  A[{2, 2}] = 0.302400000000000;
+  A[{2, 3}] = 0.259200000000000;
+  A[{2, 4}] = 0.226800000000000;
+  A[{3, 0}] = 0.362880000000000;
+  A[{3, 1}] = 0.302400000000000;
+  A[{3, 2}] = 0.259200000000000;
+  A[{3, 3}] = 0.226800000000000;
+  A[{3, 4}] = 0.201600000000000;
+  A[{4, 0}] = 0.302400000000000;
+  A[{4, 1}] = 0.259200000000000;
+  A[{4, 2}] = 0.226800000000000;
+  A[{4, 3}] = 0.201600000000000;
+  A[{4, 4}] = 0.181440000000000;
+  Vector<double> b(5);
+  b = {1, 1, 1, 1, 1};
+  Vector<double> s(5);
   s = 0;
   std::cout << "BICGSTAB initial guess s: " << s << std::endl;
 
@@ -664,8 +691,6 @@ int main(int argc, char* argv[]) {
   std::cout << "BICGSTAB Status n: " << n << std::endl;
   /**
    * @brief Expected value from matlab
-   * -0.4727   -0.2455   -0.0182    0.2091    0.4364    0.6636 0.8909    1.1182
-   * 1.3455    1.5727
-   */
+   * 16.534397576440290   -2.314815511666542e+02   9.259261630984978e+02    -1.388889198603010e+03    6.944445815867242e+02 */
   return 0;
 }

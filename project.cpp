@@ -350,17 +350,18 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
   T omega_k;
   Vector<T> p_k(length), v_k(length), h(length), x_k(length), s(length),
       t(length), r_k(length);
+  
+  //check if the current solution is already correct
+  if(norm(b - A * x) < tol){
+      return 0;
+  }
 
   for (int k = 1; k <= maxiter; ++k) {
     rho_k = dot(q_0, r_k_1);
     beta = (rho_k / rho_k_1) * (alpha / omega_k_1);
     p_k = r_k_1 + beta * (p_k_1 - omega_k_1 * v_k_1);
     v_k = A * p_k;
-    if(dot(q_0, v_k) != 0){
-      alpha = rho_k / dot(q_0, v_k);}
-    else{
-      alpha = 0;
-    }
+    alpha = rho_k / dot(q_0, v_k);
     h = x_k_1 + alpha * p_k;
     // std::cout << "################################" << std::endl;
     // std::cout << "iteration: " << k << std::endl;
@@ -575,16 +576,17 @@ int main(int argc, char* argv[]) {
   std::cout << "[norm] of float: " << typeid(z_norm).name() << '\t' << z_norm
             << std::endl;
   /** test for Matrix function and variable type */
-  Matrix<float> M(4, 4);
-  M = 1;
+  Matrix<float> M1(4, 4);
+  M1 = 1;
   Vector<double> V1(4);
   V1 = {2, 1, 2, 1};
-  auto R1 = M * V1;
-  std::cout << "[matrix] M:" << M << std::endl;
+  auto R1 = M1 * V1;
+  std::cout << "[matrix] M:" << M1 << std::endl;
   std::cout << "[matrix] V1: " << V1 << std::endl;
   std::cout << "[matrix] rst: " << R1 << '\t' << typeid(R1[0]).name() << std::endl;
 
   /** test for multiplication between different types **/
+  Matrix<float> M(3, 3);
   M[{0, 0}] = 1.0;
   M[{1, 1}] = 1.0;
   M[{2, 2}] = 1.0;

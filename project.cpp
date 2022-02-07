@@ -226,6 +226,9 @@ class Matrix {
 
   /** index operator **/
   T& operator[](const std::pair<int, int>& ij) {
+    if(ij.first >= this->row() || ij.second >= this->col()){
+        throw "indexing out of scope!";
+    }
     auto it = data.begin();
     for (; it != data.end(); ++it) {
       int i = it->first.first;

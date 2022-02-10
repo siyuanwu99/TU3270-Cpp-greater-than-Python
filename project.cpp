@@ -101,7 +101,8 @@ class Vector {
 
   /** operator +*/
   template <typename T2>
-  auto operator+(const Vector<T2>& other) const {
+  Vector<typename std::common_type<T, T2>::type> operator+(
+      const Vector<T2>& other) const {
     if (this->len() != other.len()) {
       throw "Incompatible dimensions of the vectors!";
     }
@@ -115,7 +116,8 @@ class Vector {
 
   /** operator -**/
   template <typename T2>
-  auto operator-(const Vector<T2>& other) const {
+  Vector<typename std::common_type<T, T2>::type> operator-(
+      const Vector<T2>& other) const {
     if (this->len() != other.len()) {
       throw "Incompatible dimensions of the vectors!";
     }
@@ -128,12 +130,12 @@ class Vector {
   }
 
   /** operator* between vector and scalar **/
-  template <typename V, typename=typename std::enable_if<!std::is_class<V>::value, void>::type>
-  Vector<typename std::common_type<V, T>::type> operator*(
-      const V& scalar) const {
+  template <typename V, typename = typename std::enable_if<
+                            !std::is_class<V>::value, void>::type>
+  Vector<typename std::common_type<V, T>::type> operator*(V scalar) const {
     Vector<typename std::common_type<V, T>::type> nv(this->n);
     for (int i = 0; i < this->n; i++) {
-      nv.data[i] = scalar * data[i];
+      nv[i] = scalar * data[i];
     }
     return nv;
   }
@@ -164,20 +166,11 @@ std::ostream& operator<<(std::ostream& out, const Vector<V>& v) {
 }
 
 /** operator* between a scalar and a vector （invoke the internal method） **/
-// template <
-//     typename V,
-//     typename = typename std::enable_if<!std::is_class<V>::value, void>::type,
-//     typename U>
-// Vector<typename std::common_type<V, U>::type> operator*(const V& scalar,
-//                                                         const Vector<U>& vec)
-//                                                         {
-//   return vec * scalar;
-// }
 template <
     typename V,
     typename = typename std::enable_if<!std::is_class<V>::value, void>::type,
     typename U>
-Vector<typename std::common_type<V, U>::type> operator*(const V& scalar,
+Vector<typename std::common_type<V, U>::type> operator*(V scalar,
                                                         const Vector<U>& vec) {
   return vec * scalar;
 }
@@ -235,9 +228,7 @@ class Matrix {
   /** constructor **/
   Matrix(int rows, int cols) : r(rows), c(cols){};
 
-  Matrix(const Matrix<T>& other) : r(other.r), c(other.c) {
-    data = other.data;
-  }
+  Matrix(const Matrix<T>& other) : r(other.r), c(other.c) { data = other.data; }
 
   /** destructor **/
   ~Matrix() {
@@ -322,7 +313,7 @@ std::ostream& operator<<(std::ostream& out, const Matrix<V>& m) {
   for (int i = 0; i < m.row(); i++) {
     out << "| ";
     for (int j = 0; j < m.col(); j++) {
-        out << m_[{i, j}] << " ";
+      out << m_[{i, j}] << " ";
     }
     out << "|\n";
   }
@@ -381,10 +372,10 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
   T omega_k;
   Vector<T> p_k(length), v_k(length), h(length), x_k(length), s(length),
       t(length), r_k(length);
-  
-  //check if the current solution is already correct
-  if(norm(b - A * x) < tol){
-      return 0;
+
+  // check if the current solution is already correct
+  if (norm(b - A * x) < tol) {
+    return 0;
   }
 
   for (int k = 1; k <= maxiter; ++k) {
@@ -425,7 +416,7 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
       return k;
     }
 
-    //std::cout << "error: " << norm(b - A * x) << std::endl;
+    // std::cout << "error: " << norm(b - A * x) << std::endl;
 
     r_k = s - omega_k * t;
 
@@ -437,7 +428,9 @@ int bicgstab(const Matrix<T>& A, const Vector<T>& b, Vector<T>& x,
     v_k_1 = v_k;
     x_k_1 = x_k;
   }
-  std::cout << "probably the `tol` is too low, try to increase the `tol` to get a valid solution." << std::endl;
+  std::cout << "probably the `tol` is too low, try to increase the `tol` to "
+               "get a valid solution."
+            << std::endl;
   return -1;
 }
 
@@ -542,7 +535,8 @@ class SimplestWalker {
     // std::cout << "last state: " << y[0] << ' ' << y[1] << ' ' << y[2] << ' '
     //           << y[3] << '\n';
     // heun<T>(f, y, h, t);
-    // std::cout << "current state: " << y[0] << ' ' << y[1] << ' ' << y[2] << ' '
+    // std::cout << "current state: " << y[0] << ' ' << y[1] << ' ' << y[2] << '
+    // '
     //           << y[3] << '\n';
     // std::cout << "current derivative: " << derivatives[0] << ' '
     //           << derivatives[1] << ' ' << derivatives[2] << ' '
@@ -603,18 +597,38 @@ int main(int argc, char* argv[]) {
   Vector<int> y({2, 3, 4});
   Vector<float> z({1.0f, 2.0f, 3.0f});
 
+  Vector<int> c0;
+  std::cout << "[VEC] default constructor: length: " << c0.len() << std::endl;
+
+  Vector<double> c1(x);
+  std::cout << "[VEC] copy constructor: " << c1 << std::endl;
+
+  Vector<double> c2(std::move(c1));
+  std::cout << "[VEC] move constructor: " << c2 << ' ' << c1.len() << std::endl;
+  c2[0] = 5;
+  std::cout << "[VEC] operator []:" << c2[0] << ' ' << c2[2] << std::endl;
   // std::cout << "[Vector] template multiplication: " << y * z << std::endl;
+  std::cout << "[VEC] + : " << x + y << '\t' << typeid((x + y)[0]).name()
+            << std::endl;
+  std::cout << "[VEC] - : " << y - z << '\t' << typeid((y - z)[0]).name()
+            << std::endl;
+  auto m1 = y * 2.0f;
+  auto m2 = 2.0 * z;
+  std::cout << "[VEC] v*s : " << m1 << '\t' << typeid((m1)[0]).name()
+            << std::endl;
+  std::cout << "[VEC] s*v : " << m2 << '\t' << typeid((m2)[0]).name()
+            << std::endl;
 
   auto z_dot = dot(z, y);
-  std::cout << "[dot] between float and int: " << typeid(z_dot).name() << '\t'
-            << z_dot << std::endl;
+  std::cout << "[VEC] dot between float and int: " << typeid(z_dot).name()
+            << '\t' << z_dot << std::endl;
   auto y_dot = dot(y, y);
-  std::cout << "[dot] between int and int: " << typeid(y_dot).name() << '\t'
+  std::cout << "[VEC] dot between int and int: " << typeid(y_dot).name() << '\t'
             << y_dot << std::endl;
 
   auto z_norm = norm(z);
-  std::cout << "[norm] of float: " << typeid(z_norm).name() << '\t' << z_norm
-            << std::endl;
+  std::cout << "[VEC] norm of float: " << typeid(z_norm).name() << '\t'
+            << z_norm << std::endl;
   /** test for Matrix function and variable type */
   Matrix<float> M1(4, 4);
   M1 = 1.f;
@@ -694,6 +708,7 @@ int main(int argc, char* argv[]) {
   std::cout << "BICGSTAB Status n: " << n << std::endl;
   /**
    * @brief Expected value from matlab
-   * 16.534397576440290   -2.314815511666542e+02   9.259261630984978e+02    -1.388889198603010e+03    6.944445815867242e+02 */
+   * 16.534397576440290   -2.314815511666542e+02   9.259261630984978e+02
+   * -1.388889198603010e+03    6.944445815867242e+02 */
   return 0;
 }
